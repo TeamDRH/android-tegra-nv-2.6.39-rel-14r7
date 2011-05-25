@@ -25,6 +25,9 @@
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-dev.h>
 
+#define call_op(master, op) \
+	((master->ops && master->ops->op) ? master->ops->op(master) : 0)
+
 /* Internal temporary helper struct, one for each v4l2_ext_control */
 struct ctrl_helper {
 	/* The control corresponding to the v4l2_ext_control ID field. */
@@ -1292,7 +1295,7 @@ int v4l2_ctrl_handler_setup(struct v4l2_ctrl_handler *hdl)
 		if (ctrl->type == V4L2_CTRL_TYPE_BUTTON ||
 		    (ctrl->flags & V4L2_CTRL_FLAG_READ_ONLY))
 			continue;
-		ret = master->ops->s_ctrl(master);
+		ret = call_op(master, s_ctrl);
 		if (ret)
 			break;
 		for (i = 0; i < master->ncontrols; i++)
@@ -1569,8 +1572,8 @@ int v4l2_g_ext_ctrls(struct v4l2_ctrl_handler *hdl, struct v4l2_ext_controls *cs
 
 		v4l2_ctrl_lock(master);
 		/* g_volatile_ctrl will update the current control values */
-		if (ctrl->is_volatile && master->ops->g_volatile_ctrl)
-			ret = master->ops->g_volatile_ctrl(master);
+		if (ctrl->is_volatile)
+			ret = call_op(master, g_volatile_ctrl);
 		/* If OK, then copy the current control values to the caller */
 		if (!ret)
 			ret = cluster_walk(i, cs, helpers, cur_to_user);
@@ -1601,8 +1604,8 @@ static int get_ctrl(struct v4l2_ctrl *ctrl, s32 *val)
 
 	v4l2_ctrl_lock(master);
 	/* g_volatile_ctrl will update the current control values */
-	if (ctrl->is_volatile && master->ops->g_volatile_ctrl)
-		ret = master->ops->g_volatile_ctrl(master);
+	if (ctrl->is_volatile)
+		ret = call_op(master, g_volatile_ctrl);
 	*val = ctrl->cur.val;
 	v4l2_ctrl_unlock(master);
 	return ret;
@@ -1676,12 +1679,12 @@ static int try_or_set_control_cluster(struct v4l2_ctrl *master, bool set)
 	/* For larger clusters you have to call try_ctrl again to
 	   verify that the controls are still valid after the
 	   'cur_to_new' above. */
-	if (!ret && master->ops->try_ctrl && try)
-		ret = master->ops->try_ctrl(master);
+	if (!ret && try)
+		ret = call_op(master, try_ctrl);
 
 	/* Don't set if there is no change */
 	if (!ret && set && cluster_changed(master)) {
-		ret = master->ops->s_ctrl(master);
+		ret = call_op(master, s_ctrl);
 		/* If OK, then make the new values permanent. */
 		if (!ret)
 			for (i = 0; i < master->ncontrols; i++)

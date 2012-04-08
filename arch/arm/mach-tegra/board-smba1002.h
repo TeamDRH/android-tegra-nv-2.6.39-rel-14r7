@@ -21,6 +21,7 @@
 
 #define SMBA1002_BT_RESET 		TEGRA_GPIO_PU0 	/* 0= reset asserted */
 #define SMBA1002_BT_RST 		TEGRA_GPIO_PU0 	/* 0= reset asserted */
+#define SMBA1002_HDMI_HPD		TEGRA_GPIO_PN7 /* 1=HDMI plug detected */
 /* GPS and Magnetic sensor share the same enabling IO line */
 #define SMBA1002_GPSMAG_DISABLE  	TEGRA_GPIO_PV3 	/* 0= disabled */
 #define SMBA1002_3G_DISABLE		TEGRA_GPIO_PJ2 /* 0 = disabled */

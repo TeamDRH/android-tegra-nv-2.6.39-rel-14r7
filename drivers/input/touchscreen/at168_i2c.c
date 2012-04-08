@@ -35,8 +35,8 @@
 
 
 #define DRIVER_NAME	"at168_touch"
-#define TS_POLL_DELAY			1 /* ms delay between samples */
-#define TS_POLL_PERIOD			1 /* ms delay between samples */
+#define TS_POLL_DELAY			4 /* ms delay between samples */
+#define TS_POLL_PERIOD			4 /* ms delay between samples */
 
 #ifdef CONFIG_HAS_EARLYSUSPEND
 static void at168_early_suspend(struct early_suspend *h);

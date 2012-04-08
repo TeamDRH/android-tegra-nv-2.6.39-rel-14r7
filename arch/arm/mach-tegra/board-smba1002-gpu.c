@@ -226,10 +226,8 @@ static struct tegra_dc_out smba1002_disp1_out = {
         /* Enable dithering. Tegra also supports error
                diffusion, but when the active region is less
                than 640 pixels wide. */
-       //.dither         = TEGRA_DC_ERRDIFF_DITHER,
-	     .depth          =  18,
-		 .dither         = TEGRA_DC_ORDERED_DITHER,
 
+        .dither         = TEGRA_DC_ORDERED_DITHER,
 	.height 	= 136, /* mm */
 	.width 		= 217, /* mm */
 	
@@ -245,7 +243,7 @@ static struct tegra_dc_out smba1002_hdmi_out = {
 	.flags		= TEGRA_DC_OUT_HOTPLUG_HIGH,
 
 	.dcc_bus	= 1,
-	//.hotplug_gpio	= SMBA1002_HDMI_HPD,
+	.hotplug_gpio	= SMBA1002_HDMI_HPD,
 
 	.align		= TEGRA_DC_ALIGN_MSB,
 	.order		= TEGRA_DC_ORDER_RED_BLUE,

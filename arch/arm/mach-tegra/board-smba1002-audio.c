@@ -48,7 +48,7 @@
 #include <mach/system.h>
 
 #include "board.h"
-#include "board-smba.h"
+#include "board-smba1002.h"
 #include "gpio-names.h"
 #include "devices.h"
 

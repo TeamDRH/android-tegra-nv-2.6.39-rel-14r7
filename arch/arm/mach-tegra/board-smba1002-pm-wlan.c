@@ -43,7 +43,7 @@
 #include "board-smba1002.h"
 #include "gpio-names.h"
 
-struct smba1002_pm_wlan_data {
+struct smba_pm_wlan_data {
 	struct regulator *regulator[2];
 	struct rfkill *rfkill;
 	struct clk *wifi_32k_clk;
@@ -55,9 +55,9 @@ struct smba1002_pm_wlan_data {
 
 
 /* Power control */
-static void __smba1002_pm_wlan_toggle_radio(struct device *dev, unsigned int on)
+static void __smba_pm_wlan_toggle_radio(struct device *dev, unsigned int on)
 {
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
 
 	/* Avoid turning it on if already on */
 	if (wlan_data->state == on)
@@ -96,38 +96,38 @@ static void __smba1002_pm_wlan_toggle_radio(struct device *dev, unsigned int on)
 	
 }
 
-static int smba1002_wlan_set_carddetect(struct device *dev,int val)
+static int smba_wlan_set_carddetect(struct device *dev,int val)
 {
 	dev_dbg(dev,"%s: %d\n", __func__, val);
 
 	/* power module up or down based on needs */
-	__smba1002_pm_wlan_toggle_radio(dev,val);
+	__smba_pm_wlan_toggle_radio(dev,val);
 	
 	/* notify the SDIO layer of the CD change */
-	smba1002_wifi_set_cd(val);
+	smba_wifi_set_cd(val);
 	return 0;
 } 
 
 /* rfkill */
-static int smba1002_wlan_set_radio_block(void *data, bool blocked)
+static int smba_wlan_set_radio_block(void *data, bool blocked)
 {
 	struct device *dev = data;
 	
 	dev_dbg(dev, "blocked %d\n", blocked);
 
 	/* manage rfkill by 'inserting' or 'removing' the virtual adapter */
-	return smba1002_wlan_set_carddetect(dev,!blocked);
+	return smba_wlan_set_carddetect(dev,!blocked);
 }
 
-static const struct rfkill_ops smba1002_wlan_rfkill_ops = {
-    .set_block = smba1002_wlan_set_radio_block,
+static const struct rfkill_ops smba_wlan_rfkill_ops = {
+    .set_block = smba_wlan_set_radio_block,
 };
 
 static ssize_t wlan_read(struct device *dev, struct device_attribute *attr,
 		       char *buf)
 {
 	int ret = 0;
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
 	
 	if (!strcmp(attr->attr.name, "power_on")) {
 		if (wlan_data->state)
@@ -148,14 +148,14 @@ static ssize_t wlan_write(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	unsigned long on = simple_strtoul(buf, NULL, 10);
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(dev);
 
 	if (!strcmp(attr->attr.name, "power_on")) {
 		rfkill_set_sw_state(wlan_data->rfkill, on ? 1 : 0);
-		__smba1002_pm_wlan_toggle_radio(dev, on);
+		__smba_pm_wlan_toggle_radio(dev, on);
 	} else if (!strcmp(attr->attr.name, "reset")) {
 		/* reset is low-active, so we need to invert */
-		__smba1002_pm_wlan_toggle_radio(dev, !on);
+		__smba_pm_wlan_toggle_radio(dev, !on);
 	}
 
 	return count;
@@ -165,51 +165,51 @@ static DEVICE_ATTR(power_on, 0644, wlan_read, wlan_write);
 static DEVICE_ATTR(reset, 0644, wlan_read, wlan_write);
 
 #ifdef CONFIG_PM
-static int smba1002_wlan_suspend(struct platform_device *pdev, pm_message_t state)
+static int smba_wlan_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
 
 	dev_dbg(&pdev->dev, "suspending\n");
 
 	wlan_data->pre_resume_state = wlan_data->state;
-	__smba1002_pm_wlan_toggle_radio(&pdev->dev, 0);
+	__smba_pm_wlan_toggle_radio(&pdev->dev, 0);
 
 	return 0;
 }
 
-static int smba1002_wlan_resume(struct platform_device *pdev)
+static int smba_wlan_resume(struct platform_device *pdev)
 {
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
 	dev_dbg(&pdev->dev, "resuming\n");
 
-	__smba1002_pm_wlan_toggle_radio(&pdev->dev, wlan_data->pre_resume_state);
+	__smba_pm_wlan_toggle_radio(&pdev->dev, wlan_data->pre_resume_state);
 	return 0;
 }
 #else
-#define smba1002_wlan_suspend	NULL
-#define smba1002_wlan_resume		NULL
+#define smba_wlan_suspend	NULL
+#define smba_wlan_resume		NULL
 #endif
 
-static struct attribute *smba1002_wlan_sysfs_entries[] = {
+static struct attribute *smba_wlan_sysfs_entries[] = {
 	&dev_attr_power_on.attr,
 	&dev_attr_reset.attr,
 	NULL
 };
 
-static struct attribute_group smba1002_wlan_attr_group = {
+static struct attribute_group smba_wlan_attr_group = {
 	.name	= NULL,
-	.attrs	= smba1002_wlan_sysfs_entries,
+	.attrs	= smba_wlan_sysfs_entries,
 };
 
 /* ----- Initialization/removal -------------------------------------------- */
-static int __init smba1002_wlan_probe(struct platform_device *pdev)
+static int __init smba_wlan_probe(struct platform_device *pdev)
 {
 	/* default-on for now */
 	const int default_state = 1;
 	
 	struct rfkill *rfkill;
 	struct regulator *regulator[2];
-	struct smba1002_pm_wlan_data *wlan_data;
+	struct smba_pm_wlan_data *wlan_data;
 	int ret;
 
 	wlan_data = kzalloc(sizeof(*wlan_data), GFP_KERNEL);
@@ -253,7 +253,7 @@ static int __init smba1002_wlan_probe(struct platform_device *pdev)
 	gpio_direction_output(SMBA1002_WLAN_POWER, 0);
 	
 	rfkill = rfkill_alloc("bcm4329", &pdev->dev, RFKILL_TYPE_WLAN,
-							&smba1002_wlan_rfkill_ops, &pdev->dev);
+							&smba_wlan_rfkill_ops, &pdev->dev);
 
 
 	if (!rfkill) {
@@ -281,14 +281,14 @@ static int __init smba1002_wlan_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "WLAN RFKill driver loaded\n");
 	
-	return sysfs_create_group(&pdev->dev.kobj, &smba1002_wlan_attr_group);
+	return sysfs_create_group(&pdev->dev.kobj, &smba_wlan_attr_group);
 }
 
-static int smba1002_wlan_remove(struct platform_device *pdev)
+static int smba_wlan_remove(struct platform_device *pdev)
 {
-	struct smba1002_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_wlan_data *wlan_data = dev_get_drvdata(&pdev->dev);
 
-	sysfs_remove_group(&pdev->dev.kobj, &smba1002_wlan_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &smba_wlan_attr_group);
 
 	if (wlan_data->rfkill) {
 		rfkill_unregister(wlan_data->rfkill);
@@ -298,7 +298,7 @@ static int smba1002_wlan_remove(struct platform_device *pdev)
 	if (!wlan_data || !wlan_data->regulator[0] || !wlan_data->regulator[1])
 		return 0;
 
-	__smba1002_pm_wlan_toggle_radio(&pdev->dev, 0);
+	__smba_pm_wlan_toggle_radio(&pdev->dev, 0);
 	
 	regulator_put(wlan_data->regulator[0]);	
 	regulator_put(wlan_data->regulator[1]);
@@ -309,28 +309,28 @@ static int smba1002_wlan_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static struct platform_driver smba1002_wlan_driver_ops = {
-	.probe		= smba1002_wlan_probe,
-	.remove		= smba1002_wlan_remove,
-	.suspend	= smba1002_wlan_suspend,
-	.resume		= smba1002_wlan_resume,
+static struct platform_driver smba_wlan_driver_ops = {
+	.probe		= smba_wlan_probe,
+	.remove		= smba_wlan_remove,
+	.suspend	= smba_wlan_suspend,
+	.resume		= smba_wlan_resume,
 	.driver		= {
-		.name		= "smba1002-pm-wlan",
+		.name		= "smba-pm-wlan",
 	},
 };
 
-static int __devinit smba1002_wlan_init(void)
+static int __devinit smba_wlan_init(void)
 {
-	return platform_driver_register(&smba1002_wlan_driver_ops);
+	return platform_driver_register(&smba_wlan_driver_ops);
 }
 
-static void smba1002_wlan_exit(void)
+static void smba_wlan_exit(void)
 {
-	platform_driver_unregister(&smba1002_wlan_driver_ops);
+	platform_driver_unregister(&smba_wlan_driver_ops);
 }
 
-module_init(smba1002_wlan_init);
-module_exit(smba1002_wlan_exit);
+module_init(smba_wlan_init);
+module_exit(smba_wlan_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Eduardo José Tagle <ejtagle@tutopia.com>");

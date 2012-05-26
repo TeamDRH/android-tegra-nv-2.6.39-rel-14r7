@@ -491,7 +491,7 @@ void dump_bootflags(void)
 #endif
 
 static struct clk *wifi_32k_clk;
-int smba1002_bt_wifi_gpio_init(void)
+int smba_bt_wifi_gpio_init(void)
 {
 	static bool inited = 0;
 	// Check to see if we've already been init'ed.
@@ -508,9 +508,9 @@ int smba1002_bt_wifi_gpio_init(void)
 	inited = 1;
 	return 0;	
 }
-EXPORT_SYMBOL_GPL(smba1002_bt_wifi_gpio_init);
+EXPORT_SYMBOL_GPL(smba_bt_wifi_gpio_init);
 
-int smba1002_bt_wifi_gpio_set(bool on)
+int smba_bt_wifi_gpio_set(bool on)
 {
        static int count = 0;
 	if (IS_ERR(wifi_32k_clk)) {
@@ -538,24 +538,24 @@ int smba1002_bt_wifi_gpio_set(bool on)
 	}
 	return 0;		
 }
-EXPORT_SYMBOL_GPL(smba1002_bt_wifi_gpio_set);
+EXPORT_SYMBOL_GPL(smba_bt_wifi_gpio_set);
 
 
 
 
-static void smba1002_board_suspend(int lp_state, enum suspend_stage stg)
+static void smba_board_suspend(int lp_state, enum suspend_stage stg)
 {
 	if ((lp_state == TEGRA_SUSPEND_LP1) && (stg == TEGRA_SUSPEND_BEFORE_CPU))
 		tegra_console_uart_suspend();
 }
 
-static void smba1002_board_resume(int lp_state, enum resume_stage stg)
+static void smba_board_resume(int lp_state, enum resume_stage stg)
 {
 	if ((lp_state == TEGRA_SUSPEND_LP1) && (stg == TEGRA_RESUME_AFTER_CPU))
 		tegra_console_uart_resume();
 }
 
-static struct tegra_suspend_platform_data smba1002_suspend = {
+static struct tegra_suspend_platform_data smba_suspend = {
 	.cpu_timer 	  	= 2000,  	// 5000
 	.cpu_off_timer 	= 100, 		// 5000
 	.core_timer    	= 0x7e7e,	//
@@ -564,8 +564,8 @@ static struct tegra_suspend_platform_data smba1002_suspend = {
 	.sysclkreq_high = true,
 	.suspend_mode 	= TEGRA_SUSPEND_LP1,
 	.cpu_lp2_min_residency = 2000,	
-	.board_suspend = smba1002_board_suspend,
-	.board_resume = smba1002_board_resume, 	
+	.board_suspend = smba_board_suspend,
+	.board_resume = smba_board_resume, 	
 };
 
 #ifdef CONFIG_ANDROID_RAM_CONSOLE
@@ -605,48 +605,48 @@ static void __init tegra_ramconsole_reserve(unsigned long size)
 
 #ifdef SMBA1002_GPS
 /*Fosser2's GPS MOD*/
-static atomic_t smba1002_gps_mag_powered = ATOMIC_INIT(0);
-void smba1002_gps_mag_poweron(void)
+static atomic_t smba_gps_mag_powered = ATOMIC_INIT(0);
+void smba_gps_mag_poweron(void)
 {
-	if (atomic_inc_return(&smba1002_gps_mag_powered) == 1) {
+	if (atomic_inc_return(&smba_gps_mag_powered) == 1) {
 		pr_info("Enabling GPS/Magnetic module\n");
 		/* 3G/GPS power on sequence */
 		gpio_set_value(SMBA1002_GPSMAG_DISABLE, 1); /* Enable power */
 		msleep(2);
 	}
 }
-EXPORT_SYMBOL_GPL(smba1002_gps_mag_poweron);
+EXPORT_SYMBOL_GPL(smba_gps_mag_poweron);
 
-void smba1002_gps_mag_poweroff(void)
+void smba_gps_mag_poweroff(void)
 {
-	if (atomic_dec_return(&smba1002_gps_mag_powered) == 0) {
+	if (atomic_dec_return(&smba_gps_mag_powered) == 0) {
 		pr_info("Disabling GPS/Magnetic module\n");
 		/* 3G/GPS power on sequence */
 		gpio_set_value(SMBA1002_GPSMAG_DISABLE, 0); /* Disable power */
 		msleep(2);
 	}
 }
-EXPORT_SYMBOL_GPL(smba1002_gps_mag_poweroff);
+EXPORT_SYMBOL_GPL(smba_gps_mag_poweroff);
 
-static atomic_t smba1002_gps_mag_inited = ATOMIC_INIT(0);
-void smba1002_gps_mag_init(void)
+static atomic_t smba_gps_mag_inited = ATOMIC_INIT(0);
+void smba_gps_mag_init(void)
 {
-	if (atomic_inc_return(&smba1002_gps_mag_inited) == 1) {
+	if (atomic_inc_return(&smba_gps_mag_inited) == 1) {
 		gpio_request(SMBA1002_GPSMAG_DISABLE, "gps_disable");
 		gpio_direction_output(SMBA1002_GPSMAG_DISABLE, 0);
 	}
 }
-EXPORT_SYMBOL_GPL(smba1002_gps_mag_init);
+EXPORT_SYMBOL_GPL(smba_gps_mag_init);
 
-void smba1002_gps_mag_deinit(void)
+void smba_gps_mag_deinit(void)
 {
-	atomic_dec(&smba1002_gps_mag_inited);
+	atomic_dec(&smba_gps_mag_inited);
 }
-EXPORT_SYMBOL_GPL(smba1002_gps_mag_deinit);
+EXPORT_SYMBOL_GPL(smba_gps_mag_deinit);
 
 #endif
 
-static void __init tegra_smba1002_init(void)
+static void __init tegra_smba_init(void)
 {
 	struct clk *clk;
 
@@ -654,7 +654,7 @@ static void __init tegra_smba1002_init(void)
 	// console_suspend_enabled = 0;
 
 	/* Init the suspend information */
-	tegra_init_suspend(&smba1002_suspend);
+	tegra_init_suspend(&smba_suspend);
 
 	/* Set the SDMMC1 (wifi) tap delay to 6.  This value is determined
 	 * based on propagation delay on the PCB traces. */
@@ -667,69 +667,69 @@ static void __init tegra_smba1002_init(void)
 	}
 
 	/* Initialize the pinmux */
-	smba1002_pinmux_init();
+	smba_pinmux_init();
 
 	/* Initialize the clocks - clocks require the pinmux to be initialized first */
-	smba1002_clks_init();
+	smba_clks_init();
 
 	/* Register i2c devices - required for Power management and MUST be done before the power register */
-	smba1002_i2c_register_devices();
+	smba_i2c_register_devices();
 
 	/* Register the power subsystem - Including the poweroff handler - Required by all the others */
-	smba1002_power_register_devices();
+	smba_power_register_devices();
 	
 
 
 	/* Register UART devices */
-	smba1002_uart_register_devices();
+	smba_uart_register_devices();
 	
 	/* Register SPI devices */
-	smba1002_spi_register_devices();
+	smba_spi_register_devices();
 
 	/* Register GPU devices */
-	smba1002_gpu_register_devices();
+	smba_gpu_register_devices();
 
 	/* Register Audio devices */
-	smba1002_audio_register_devices();
+	smba_audio_register_devices();
 
 	/* Register Jack devices */
-//	smba1002_jack_register_devices();
+//	smba_jack_register_devices();
 
 	/* Register AES encryption devices */
-	smba1002_aes_register_devices();
+	smba_aes_register_devices();
 
 	/* Register Watchdog devices */
-	smba1002_wdt_register_devices();
+	smba_wdt_register_devices();
 
 	/* Register all the keyboard devices */
-	smba1002_keyboard_register_devices();
+	smba_keyboard_register_devices();
 	
 	/* Register touchscreen devices */
-	smba1002_touch_register_devices();
+	smba_touch_register_devices();
 	
 	/* Register accelerometer device */
-	smba1002_sensors_register_devices();
+	smba_sensors_register_devices();
 	
 	/* Register Bluetooth powermanagement devices */
-	smba1002_bt_rfkill();
-	smba1002_setup_bluesleep();
+	smba_bt_rfkill();
+	smba_setup_bluesleep();
 
 	/* Register Camera powermanagement devices */
-	//smba1002_camera_register_devices();
+	smba_camera_register_devices();
 
 	/* Register NAND flash devices */
-	smba1002_nand_register_devices();
+	smba_nand_register_devices();
 	
 	/* Register SDHCI devices */
-	smba1002_sdhci_register_devices();	
+	smba_sdhci_register_devices();	
 	
 	/* Register the USB device */
-	smba1002_usb_register_devices();
+	smba_usb_register_devices();
 #ifdef SMBA1002_GPS
 	/* Register gps powermanagement devices */
-	smba1002_gps_pm_register_devices();
-	smba1002_gps_mag_init();
-	smba1002_gps_mag_poweron();
+	smba_gps_pm_register_devices();
+	smba_gps_mag_init();
+	smba_gps_mag_poweron();
 #endif	
 	tegra_release_bootloader_fb();
 #ifdef CONFIG_TEGRA_WDT_RECOVERY
@@ -740,7 +740,7 @@ static void __init tegra_smba1002_init(void)
    	   NB: This is not working on SMBA1002. And seems there is no point in fixing it,
 	   as the EMC clock is forced to the maximum speed as soon as the 2D/3D engine
 	   starts.*/
-	smba1002_init_emc();
+	smba_init_emc();
 #endif
 
 #ifdef _DUMP_WBCODE
@@ -760,7 +760,7 @@ static void __init tegra_smba1002_init(void)
 	tegra_release_bootloader_fb();
 }
 
-static void __init tegra_smba1002_reserve(void)
+static void __init tegra_smba_reserve(void)
 {
 	if (memblock_reserve(0x0, 4096) < 0)
 		pr_warn("Cannot reserve first 4K of memory for safety\n");
@@ -780,7 +780,7 @@ static void __init tegra_smba1002_reserve(void)
 #endif
 }
 
-static void __init tegra_smba1002_fixup(struct machine_desc *desc,
+static void __init tegra_smba_fixup(struct machine_desc *desc,
 	struct tag *tags, char **cmdline, struct meminfo *mi)
 {
 	mi->nr_banks = SMBA1002_MEM_BANKS;
@@ -801,9 +801,9 @@ MACHINE_START(HARMONY, "harmony")
 	.init_early     = tegra_init_early,
 	.init_irq       = tegra_init_irq,
 	.timer          = &tegra_timer,
-	.init_machine	= tegra_smba1002_init,
-	.reserve		= tegra_smba1002_reserve,
-	.fixup			= tegra_smba1002_fixup,
+	.init_machine	= tegra_smba_init,
+	.reserve		= tegra_smba_reserve,
+	.fixup			= tegra_smba_fixup,
 MACHINE_END
 
 #ifdef MACH_TYPE_TEGRA_LEGACY
@@ -816,7 +816,7 @@ MACHINE_START(LEGACY, "legacy")
 	.init_early     = tegra_init_early,
 	.init_irq       = tegra_init_irq,
 	.timer          = &tegra_timer, 	
-	.init_machine	= tegra_smba1002_init,
-	.reserve		= tegra_smba1002_reserve,
-	.fixup			= tegra_smba1002_fixup,
+	.init_machine	= tegra_smba_init,
+	.reserve		= tegra_smba_reserve,
+	.fixup			= tegra_smba_fixup,
 MACHINE_END

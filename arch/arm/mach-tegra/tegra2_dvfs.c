@@ -57,9 +57,9 @@ static const int core_speedo_nominal_millivolts[] =
 
 static struct dvfs_rail tegra2_dvfs_rail_vdd_cpu = {
 	.reg_id = "vdd_cpu",
-	.max_millivolts = 1175,
+	.max_millivolts = 1125,
 	.min_millivolts = 750,
-	.nominal_millivolts = 1125,
+	.nominal_millivolts = 1175,
 };
 
 static struct dvfs_rail tegra2_dvfs_rail_vdd_core = {

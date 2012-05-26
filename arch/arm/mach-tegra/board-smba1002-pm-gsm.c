@@ -39,7 +39,7 @@
 #include <mach/hardware.h>
 #include <asm/mach-types.h>
 
-struct smba1002_pm_gsm_data {
+struct smba_pm_gsm_data {
 	struct regulator *regulator[2];
 	int pre_resume_state;
 	int state;
@@ -50,9 +50,9 @@ struct smba1002_pm_gsm_data {
 };
 
 /* Power control */
-static void __smba1002_pm_gsm_toggle_radio(struct device *dev, unsigned int on)
+static void __smba_pm_gsm_toggle_radio(struct device *dev, unsigned int on)
 {
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
 
 	/* Avoid turning it on or off if already in that state */
 	if (gsm_data->state == on)
@@ -70,7 +70,7 @@ static void __smba1002_pm_gsm_toggle_radio(struct device *dev, unsigned int on)
 //W_DISABLE=PB0
 // EN_3G=PJ2
 		gpio_set_value(SMBA1002_3G_DISABLE, 1);
-		//smba1002_3g_gps_poweroff();
+		//smba_3g_gps_poweroff();
 				
 		regulator_disable(gsm_data->regulator[1]);
 		regulator_disable(gsm_data->regulator[0]);
@@ -85,12 +85,12 @@ static int gsm_rfkill_set_block(void *data, bool blocked)
 	struct device *dev = data;
 	dev_dbg(dev, "blocked %d\n", blocked);
 
-	__smba1002_pm_gsm_toggle_radio(dev, !blocked);
+	__smba_pm_gsm_toggle_radio(dev, !blocked);
 
 	return 0;
 }
 
-static const struct rfkill_ops smba1002_gsm_rfkill_ops = {
+static const struct rfkill_ops smba_gsm_rfkill_ops = {
        .set_block = gsm_rfkill_set_block,
 };
 
@@ -98,7 +98,7 @@ static ssize_t gsm_read(struct device *dev, struct device_attribute *attr,
 		       char *buf)
 {
 	int ret = 0;
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
 	
 	if (!strcmp(attr->attr.name, "power_on")) {
 		if (gsm_data->state)
@@ -124,14 +124,14 @@ static ssize_t gsm_write(struct device *dev, struct device_attribute *attr,
 			const char *buf, size_t count)
 {
 	unsigned long on = simple_strtoul(buf, NULL, 10);
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(dev);
 
 	if (!strcmp(attr->attr.name, "power_on")) {
 		rfkill_set_sw_state(gsm_data->rfkill, on ? 1 : 0);
-		__smba1002_pm_gsm_toggle_radio(dev, on);
+		__smba_pm_gsm_toggle_radio(dev, on);
 	} else if (!strcmp(attr->attr.name, "reset")) {
 		/* reset is low-active, so we need to invert */
-		__smba1002_pm_gsm_toggle_radio(dev, !on);
+		__smba_pm_gsm_toggle_radio(dev, !on);
 	}
 #ifdef CONFIG_PM
 	else if (!strcmp(attr->attr.name, "keep_on_in_suspend")) {
@@ -145,50 +145,50 @@ static DEVICE_ATTR(power_on, 0644, gsm_read, gsm_write);
 static DEVICE_ATTR(reset, 0644, gsm_read, gsm_write);
 
 #ifdef CONFIG_PM
-static int smba1002_gsm_suspend(struct platform_device *pdev, pm_message_t state)
+static int smba_gsm_suspend(struct platform_device *pdev, pm_message_t state)
 {
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
 
 	dev_dbg(&pdev->dev, "suspending\n");
 
 	gsm_data->pre_resume_state = gsm_data->state;
 	if (!gsm_data->keep_on_in_suspend)
-		__smba1002_pm_gsm_toggle_radio(&pdev->dev, 0);
+		__smba_pm_gsm_toggle_radio(&pdev->dev, 0);
 	else
 		dev_warn(&pdev->dev, "keeping GSM ON during suspend\n");
 		
 	return 0;
 }
 
-static int smba1002_gsm_resume(struct platform_device *pdev)
+static int smba_gsm_resume(struct platform_device *pdev)
 {
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
 	dev_dbg(&pdev->dev, "resuming\n");
 
-	__smba1002_pm_gsm_toggle_radio(&pdev->dev, gsm_data->pre_resume_state);
+	__smba_pm_gsm_toggle_radio(&pdev->dev, gsm_data->pre_resume_state);
 	return 0;
 }
 #else
-#define smba1002_gsm_suspend	NULL
-#define smba1002_gsm_resume		NULL
+#define smba_gsm_suspend	NULL
+#define smba_gsm_resume		NULL
 #endif
 
-static struct attribute *smba1002_gsm_sysfs_entries[] = {
+static struct attribute *smba_gsm_sysfs_entries[] = {
 	&dev_attr_power_on.attr,
 	&dev_attr_reset.attr,
 	NULL
 };
 
-static struct attribute_group smba1002_gsm_attr_group = {
+static struct attribute_group smba_gsm_attr_group = {
 	.name	= NULL,
-	.attrs	= smba1002_gsm_sysfs_entries,
+	.attrs	= smba_gsm_sysfs_entries,
 };
 
-static int __init smba1002_gsm_probe(struct platform_device *pdev)
+static int __init smba_gsm_probe(struct platform_device *pdev)
 {
 	struct rfkill *rfkill;
 	struct regulator *regulator[2];
-	struct smba1002_pm_gsm_data *gsm_data;
+	struct smba_pm_gsm_data *gsm_data;
 	int ret;
 
 	gsm_data = kzalloc(sizeof(*gsm_data), GFP_KERNEL);
@@ -221,11 +221,11 @@ static int __init smba1002_gsm_probe(struct platform_device *pdev)
 	/* Init control pins */
 	gpio_request(SMBA1002_3G_DISABLE, "gsm_disable");
 	gpio_direction_output(SMBA1002_3G_DISABLE, 1);
-//	smba1002_3g_gps_init();
+//	smba_3g_gps_init();
 
 	/* register rfkill interface */
 	rfkill = rfkill_alloc(pdev->name, &pdev->dev, RFKILL_TYPE_WWAN,
-                            &smba1002_gsm_rfkill_ops, &pdev->dev);
+                            &smba_gsm_rfkill_ops, &pdev->dev);
 
 	if (!rfkill) {
 		dev_err(&pdev->dev, "Failed to allocate rfkill\n");
@@ -251,14 +251,14 @@ static int __init smba1002_gsm_probe(struct platform_device *pdev)
 
 	dev_info(&pdev->dev, "GSM/UMTS RFKill driver loaded\n");
 	
-	return sysfs_create_group(&pdev->dev.kobj, &smba1002_gsm_attr_group);
+	return sysfs_create_group(&pdev->dev.kobj, &smba_gsm_attr_group);
 }
 
-static int smba1002_gsm_remove(struct platform_device *pdev)
+static int smba_gsm_remove(struct platform_device *pdev)
 {
-	struct smba1002_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_gsm_data *gsm_data = dev_get_drvdata(&pdev->dev);
 
-	sysfs_remove_group(&pdev->dev.kobj, &smba1002_gsm_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &smba_gsm_attr_group);
 
 	if (!gsm_data)
 		return 0;
@@ -269,7 +269,7 @@ static int smba1002_gsm_remove(struct platform_device *pdev)
 	}
 
 	if (gsm_data->regulator[0] && gsm_data->regulator[1])
-		__smba1002_pm_gsm_toggle_radio(&pdev->dev, 0);
+		__smba_pm_gsm_toggle_radio(&pdev->dev, 0);
 
 	if (gsm_data->regulator[0]) 
 		regulator_put(gsm_data->regulator[0]);
@@ -281,28 +281,28 @@ static int smba1002_gsm_remove(struct platform_device *pdev)
 
 	return 0;
 }
-static struct platform_driver smba1002_gsm_driver_ops = {
-	.probe		= smba1002_gsm_probe,
-	.remove		= smba1002_gsm_remove,
-	.suspend	= smba1002_gsm_suspend,
-	.resume		= smba1002_gsm_resume,
+static struct platform_driver smba_gsm_driver_ops = {
+	.probe		= smba_gsm_probe,
+	.remove		= smba_gsm_remove,
+	.suspend	= smba_gsm_suspend,
+	.resume		= smba_gsm_resume,
 	.driver		= {
-		.name		= "smba1002-pm-gsm",
+		.name		= "smba-pm-gsm",
 	},
 };
 
-static int __devinit smba1002_gsm_init(void)
+static int __devinit smba_gsm_init(void)
 {
-	return platform_driver_register(&smba1002_gsm_driver_ops);
+	return platform_driver_register(&smba_gsm_driver_ops);
 }
 
-static void smba1002_gsm_exit(void)
+static void smba_gsm_exit(void)
 {
-	platform_driver_unregister(&smba1002_gsm_driver_ops);
+	platform_driver_unregister(&smba_gsm_driver_ops);
 }
 
-module_init(smba1002_gsm_init);
-module_exit(smba1002_gsm_exit);
+module_init(smba_gsm_init);
+module_exit(smba_gsm_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Eduardo José Tagle <ejtagle@tutopia.com>");

@@ -25,7 +25,7 @@
 #include "gpio-names.h"
 
 #ifdef SMBA1002_GPS
-struct smba1002_pm_gps_data {
+struct smba_pm_gps_data {
 	struct regulator *regulator[2];
 	int pre_resume_state;
 	int state;
@@ -35,9 +35,9 @@ struct smba1002_pm_gps_data {
 };
 
 /* Power control */
-static void __smba1002_pm_gps_toggle_radio(struct device *dev, unsigned int on)
+static void __smba_pm_gps_toggle_radio(struct device *dev, unsigned int on)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(dev);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(dev);
 
 	/* Avoid turning it on or off if already in that state */
 	if (gps_data->state == on)
@@ -49,11 +49,11 @@ static void __smba1002_pm_gps_toggle_radio(struct device *dev, unsigned int on)
 		regulator_enable(gps_data->regulator[1]);
 	
 		/* 3G/GPS power on sequence */
-		smba1002_gps_mag_poweron();
+		smba_gps_mag_poweron();
 
 	} else {
 	
-		smba1002_gps_mag_poweroff();
+		smba_gps_mag_poweroff();
 				
 		regulator_disable(gps_data->regulator[1]);
 		regulator_disable(gps_data->regulator[0]);
@@ -64,10 +64,10 @@ static void __smba1002_pm_gps_toggle_radio(struct device *dev, unsigned int on)
 }
 
 
-static ssize_t smba1002_gps_read(struct device *dev,
+static ssize_t smba_gps_read(struct device *dev,
 			      struct device_attribute *attr, char *buf)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(dev);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(dev);
 	int ret = 0;
 
 	if (!strcmp(attr->attr.name, "power_on") ||
@@ -84,16 +84,16 @@ static ssize_t smba1002_gps_read(struct device *dev,
 		return strlcpy(buf, "0\n", 3);
 }
 
-static ssize_t smba1002_gps_write(struct device *dev,
+static ssize_t smba_gps_write(struct device *dev,
 			       struct device_attribute *attr, const char *buf,
 			       size_t count)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(dev);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(dev);
 	unsigned long on = simple_strtoul(buf, NULL, 10);
 
 	if (!strcmp(attr->attr.name, "power_on") ||
 	    !strcmp(attr->attr.name, "pwron")) {
-		__smba1002_pm_gps_toggle_radio(dev,on);
+		__smba_pm_gps_toggle_radio(dev,on);
 #ifdef CONFIG_PM
 	} else if (!strcmp(attr->attr.name, "keep_on_in_suspend")) {
 		gps_data->keep_on_in_suspend = on;
@@ -103,35 +103,35 @@ static ssize_t smba1002_gps_write(struct device *dev,
 }
 
 #ifdef CONFIG_PM
-static int smba1002_pm_gps_suspend(struct platform_device *pdev,
+static int smba_pm_gps_suspend(struct platform_device *pdev,
 				pm_message_t state)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
 	
 	gps_data->pre_resume_state = gps_data->state;
 	if (!gps_data->keep_on_in_suspend)
-		__smba1002_pm_gps_toggle_radio(&pdev->dev,0);
+		__smba_pm_gps_toggle_radio(&pdev->dev,0);
 	else
 		dev_warn(&pdev->dev, "keeping gps ON during suspend\n");
 	return 0;
 }
 
-static int smba1002_pm_gps_resume(struct platform_device *pdev)
+static int smba_pm_gps_resume(struct platform_device *pdev)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
-	__smba1002_pm_gps_toggle_radio(&pdev->dev,gps_data->pre_resume_state);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
+	__smba_pm_gps_toggle_radio(&pdev->dev,gps_data->pre_resume_state);
 	return 0;
 }
 
-static DEVICE_ATTR(keep_on_in_suspend, 0644, smba1002_gps_read, smba1002_gps_write);
+static DEVICE_ATTR(keep_on_in_suspend, 0644, smba_gps_read, smba_gps_write);
 #else
-#define smba1002_pm_gps_suspend	NULL
-#define smba1002_pm_gps_resume	NULL
+#define smba_pm_gps_suspend	NULL
+#define smba_pm_gps_resume	NULL
 #endif
 
-static DEVICE_ATTR(power_on, 0644, smba1002_gps_read, smba1002_gps_write);
+static DEVICE_ATTR(power_on, 0644, smba_gps_read, smba_gps_write);
 
-static struct attribute *smba1002_gps_sysfs_entries[] = {
+static struct attribute *smba_gps_sysfs_entries[] = {
 	&dev_attr_power_on.attr,
 #ifdef CONFIG_PM
 	&dev_attr_keep_on_in_suspend.attr,
@@ -139,15 +139,15 @@ static struct attribute *smba1002_gps_sysfs_entries[] = {
 	NULL
 };
 
-static struct attribute_group smba1002_gps_attr_group = {
+static struct attribute_group smba_gps_attr_group = {
 	.name	= NULL,
-	.attrs	= smba1002_gps_sysfs_entries,
+	.attrs	= smba_gps_sysfs_entries,
 };
 
-static int __init smba1002_pm_gps_probe(struct platform_device *pdev)
+static int __init smba_pm_gps_probe(struct platform_device *pdev)
 {
 	struct regulator *regulator[2];
-	struct smba1002_pm_gps_data *gps_data;
+	struct smba_pm_gps_data *gps_data;
 	
 	gps_data = kzalloc(sizeof(*gps_data), GFP_KERNEL);
 	if (!gps_data) {
@@ -179,25 +179,25 @@ static int __init smba1002_pm_gps_probe(struct platform_device *pdev)
 	gps_data->regulator[1] = regulator[1];
 	
 	/* Init io pins */
-	smba1002_gps_mag_init();
+	smba_gps_mag_init();
 
 	dev_info(&pdev->dev, "GPS power management driver loaded\n");
 	
 	return sysfs_create_group(&pdev->dev.kobj,
-				  &smba1002_gps_attr_group);
+				  &smba_gps_attr_group);
 }
 
-static int smba1002_pm_gps_remove(struct platform_device *pdev)
+static int smba_pm_gps_remove(struct platform_device *pdev)
 {
-	struct smba1002_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
+	struct smba_pm_gps_data *gps_data = dev_get_drvdata(&pdev->dev);
 
-	sysfs_remove_group(&pdev->dev.kobj, &smba1002_gps_attr_group);
+	sysfs_remove_group(&pdev->dev.kobj, &smba_gps_attr_group);
 	
 	if (!gps_data)
 		return 0;
 	
 	if (gps_data->regulator[0] && gps_data->regulator[1])
-		__smba1002_pm_gps_toggle_radio(&pdev->dev, 0);
+		__smba_pm_gps_toggle_radio(&pdev->dev, 0);
 
 	if (gps_data->regulator[0]) 
 		regulator_put(gps_data->regulator[0]);
@@ -209,28 +209,28 @@ static int smba1002_pm_gps_remove(struct platform_device *pdev)
 	return 0;
 }
 
-static struct platform_driver smba1002_pm_gps_driver_ops = {
-	.probe		= smba1002_pm_gps_probe,
-	.remove		= smba1002_pm_gps_remove,
-	.suspend	= smba1002_pm_gps_suspend,
-	.resume		= smba1002_pm_gps_resume,
+static struct platform_driver smba_pm_gps_driver_ops = {
+	.probe		= smba_pm_gps_probe,
+	.remove		= smba_pm_gps_remove,
+	.suspend	= smba_pm_gps_suspend,
+	.resume		= smba_pm_gps_resume,
 	.driver		= {
-		.name		= "smba1002-pm-gps",
+		.name		= "smba-pm-gps",
 	},
 };
 
-static int __devinit smba1002_pm_gps_init(void)
+static int __devinit smba_pm_gps_init(void)
 {
-	return platform_driver_register(&smba1002_pm_gps_driver_ops);
+	return platform_driver_register(&smba_pm_gps_driver_ops);
 }
 
-static void smba1002_pm_gps_exit(void)
+static void smba_pm_gps_exit(void)
 {
-	platform_driver_unregister(&smba1002_pm_gps_driver_ops);
+	platform_driver_unregister(&smba_pm_gps_driver_ops);
 }
 
-module_init(smba1002_pm_gps_init);
-module_exit(smba1002_pm_gps_exit);
+module_init(smba_pm_gps_init);
+module_exit(smba_pm_gps_exit);
 #endif
 
 MODULE_LICENSE("GPL");

@@ -45,18 +45,18 @@
 #include "devices.h"
 
 #ifdef SMBA1002_GPS
-static struct platform_device smba1002_gps_pm_device = {
-	.name		= "smba1002-pm-gps",
+static struct platform_device smba_gps_pm_device = {
+	.name		= "smba-pm-gps",
 	.id			= -1,
 };
 
 
-static struct platform_device *smba1002_gps_pm_devices[] __initdata = {
-	&smba1002_gps_pm_device,
+static struct platform_device *smba_gps_pm_devices[] __initdata = {
+	&smba_gps_pm_device,
 };
 
-int __init smba1002_gps_pm_register_devices(void)
+int __init smba_gps_pm_register_devices(void)
 {
-	return platform_add_devices(smba1002_gps_pm_devices, ARRAY_SIZE(smba1002_gps_pm_devices));
+	return platform_add_devices(smba_gps_pm_devices, ARRAY_SIZE(smba_gps_pm_devices));
 }
 #endif

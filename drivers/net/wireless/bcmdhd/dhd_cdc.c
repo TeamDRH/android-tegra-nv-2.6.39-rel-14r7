@@ -21,7 +21,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: dhd_cdc.c 303389 2011-12-16 09:30:48Z $
+ * $Id: dhd_cdc.c 324280 2012-03-28 19:01:17Z $
  *
  * BDC is like CDC, except it includes a header for data packets to convey
  * packet priority over the bus, and flags (e.g. to indicate checksum status
@@ -311,7 +311,6 @@ dhd_prot_ioctl(dhd_pub_t *dhd, int ifidx, wl_ioctl_t * ioc, void * buf, int len)
 	prot->pending = TRUE;
 	prot->lastcmd = ioc->cmd;
 	action = ioc->set;
-
 	if (action & WL_IOCTL_ACTION_SET)
 		ret = dhdcdc_set_ioctl(dhd, ifidx, ioc->cmd, buf, len, action);
 	else {
@@ -328,7 +327,7 @@ dhd_prot_ioctl(dhd_pub_t *dhd, int ifidx, wl_ioctl_t * ioc, void * buf, int len)
 		ioc->needed = ltoh32(msg->len); /* len == needed when set/query fails from dongle */
 	}
 
-	/* Intercept th  wme_dp ioctl here */
+	/* Intercept the wme_dp ioctl here */
 	if ((!ret) && (ioc->cmd == WLC_SET_VAR) && (!strcmp(buf, "wme_dp"))) {
 		int slen, val = 0;
 

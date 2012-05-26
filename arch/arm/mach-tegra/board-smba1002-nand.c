@@ -45,7 +45,7 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct tegra_nand_chip_parms smba1002_nand_chip_parms[] = {
+static struct tegra_nand_chip_parms smba_nand_chip_parms[] = {
 	/* Samsung K5E2G1GACM */
 	[0] = {
 		.vendor_id   = 0xEC,
@@ -384,7 +384,7 @@ static struct tegra_nand_chip_parms smba1002_nand_chip_parms[] = {
 	Can be overriden from the command line
 */
 	
-static struct mtd_partition smba1002_nand_partitions[] = {
+static struct mtd_partition smba_nand_partitions[] = {
 	[0] = {
 		.name		= "misc",
 		.offset		=  9984*1024,
@@ -414,12 +414,12 @@ static struct mtd_partition smba1002_nand_partitions[] = {
 	},
 };
 
-static struct tegra_nand_platform smba1002_nand_data = {
+static struct tegra_nand_platform smba_nand_data = {
 	.max_chips	= 8,
-	.chip_parms	= smba1002_nand_chip_parms,
-	.nr_chip_parms  = ARRAY_SIZE(smba1002_nand_chip_parms),
-	.parts		= smba1002_nand_partitions,
-	.nr_parts	= ARRAY_SIZE(smba1002_nand_partitions),
+	.chip_parms	= smba_nand_chip_parms,
+	.nr_chip_parms  = ARRAY_SIZE(smba_nand_chip_parms),
+	.parts		= smba_nand_partitions,
+	.nr_parts	= ARRAY_SIZE(smba_nand_partitions),
 	.wp_gpio = TEGRA_GPIO_PC7,
 };
 
@@ -437,11 +437,11 @@ struct platform_device tegra_nand_device = {
 	.num_resources  = ARRAY_SIZE(resources_nand),
 	.resource       = resources_nand,
 	.dev            = {
-		.platform_data = &smba1002_nand_data,
+		.platform_data = &smba_nand_data,
 	},
 };
 
-int __init smba1002_nand_register_devices(void)
+int __init smba_nand_register_devices(void)
 {
 
 	/* Enable writes on NAND */

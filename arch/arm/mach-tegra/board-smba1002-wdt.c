@@ -44,11 +44,11 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device *smba1002_wdt_devices[] __initdata = {
+static struct platform_device *smba_wdt_devices[] __initdata = {
 	&tegra_wdt_device,
 };
 
-int __init smba1002_wdt_register_devices(void)
+int __init smba_wdt_register_devices(void)
 {
-	return platform_add_devices(smba1002_wdt_devices, ARRAY_SIZE(smba1002_wdt_devices));
+	return platform_add_devices(smba_wdt_devices, ARRAY_SIZE(smba_wdt_devices));
 }

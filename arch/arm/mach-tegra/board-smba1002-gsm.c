@@ -44,17 +44,17 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device smba1002_gsm_pm_device = {
-	.name		= "smba1002-pm-gsm",
+static struct platform_device smba_gsm_pm_device = {
+	.name		= "smba-pm-gsm",
 	.id			= -1,
 };
 
 
-static struct platform_device *smba1002_gsm_pm_devices[] __initdata = {
-	&smba1002_gsm_pm_device,
+static struct platform_device *smba_gsm_pm_devices[] __initdata = {
+	&smba_gsm_pm_device,
 };
 
-int __init smba1002_gsm_pm_register_devices(void)
+int __init smba_gsm_pm_register_devices(void)
 {
-	return platform_add_devices(smba1002_gsm_pm_devices, ARRAY_SIZE(smba1002_gsm_pm_devices));
+	return platform_add_devices(smba_gsm_pm_devices, ARRAY_SIZE(smba_gsm_pm_devices));
 }

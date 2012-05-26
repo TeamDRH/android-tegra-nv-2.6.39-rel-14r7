@@ -51,7 +51,7 @@
 
 	*/
 
-static const struct tegra_emc_table smba1002_emc_tables[] = {
+static const struct tegra_emc_table smba_emc_tables[] = {
   	{
 		.rate =  18000,   /* SDRAM frequency : 950mV emc core voltage*/
 		.regs = {
@@ -605,20 +605,20 @@ static const struct tegra_emc_table smba1002_emc_tables[] = {
 #endif
 };
 
-static const struct tegra_emc_chip smba1002_emc_chips[] = {
+static const struct tegra_emc_chip smba_emc_chips[] = {
 	{
 		.description = "Smba1002 memory",
 		.mem_manufacturer_id = -1,
 		.mem_revision_id1 = -1,
 		.mem_revision_id2 = -1,
 		.mem_pid = -1,
-		.table = smba1002_emc_tables,
-		.table_size = ARRAY_SIZE(smba1002_emc_tables),
+		.table = smba_emc_tables,
+		.table_size = ARRAY_SIZE(smba_emc_tables),
 	},
 };
 
 
-void __init smba1002_init_emc(void)
+void __init smba_init_emc(void)
 {
-	tegra_init_emc(smba1002_emc_chips, ARRAY_SIZE(smba1002_emc_chips));
+	tegra_init_emc(smba_emc_chips, ARRAY_SIZE(smba_emc_chips));
 }

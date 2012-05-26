@@ -43,11 +43,11 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device *smba1002_aes_devices[] __initdata = {
+static struct platform_device *smba_aes_devices[] __initdata = {
 	&tegra_aes_device,
 };
 
-int __init smba1002_aes_register_devices(void)
+int __init smba_aes_register_devices(void)
 {
-	return platform_add_devices(smba1002_aes_devices, ARRAY_SIZE(smba1002_aes_devices));
+	return platform_add_devices(smba_aes_devices, ARRAY_SIZE(smba_aes_devices));
 }

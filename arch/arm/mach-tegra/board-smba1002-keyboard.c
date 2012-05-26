@@ -2,7 +2,7 @@
 /*
  * arch/arm/mach-tegra/board-smba1002-keyboard.c
  *
- * Copyright (C) 2011 Eduardo José Tagle <ejtagle@tutopia.com>
+ * Copyright (C) 2011 Eduardo Josï¿½ Tagle <ejtagle@tutopia.com>
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -37,7 +37,7 @@
 #include "wakeups-t2.h"
 #include "fuse.h"
 
-static struct gpio_keys_button smba1002_keys[] = {
+static struct gpio_keys_button smba_keys[] = {
 	[0] = {
 		.gpio = SMBA1002_KEY_VOLUMEUP,
 		.active_low = true,
@@ -59,7 +59,7 @@ static struct gpio_keys_button smba1002_keys[] = {
 	[2] = {
 		.gpio = SMBA1002_KEY_POWER,
 		.active_low = true,
-		.debounce_interval = 50,
+		.debounce_interval = 40,
 		.wakeup = true,		
 		.code = KEY_POWER,
 		.type = EV_KEY,		
@@ -74,40 +74,49 @@ static struct gpio_keys_button smba1002_keys[] = {
 		.type = EV_KEY,		
 		.desc = "back",
 	},
+	[4] = {
+		.gpio = SMBA1002_KEY_HOMEPAGE,
+		.active_low = true,
+		.debounce_interval = 10,
+		.wakeup = false,		
+		.code = KEY_BACK,
+		.type = EV_KEY,		
+		.desc = "homepage",
+	},
 };
 #define PMC_WAKE_STATUS 0x14
 
-static int smba1002_wakeup_key(void)
+static int smba_wakeup_key(void)
 {
 	unsigned long status = 
 		readl(IO_ADDRESS(TEGRA_PMC_BASE) + PMC_WAKE_STATUS);
-	return status & TEGRA_WAKE_GPIO_PV2 ? KEY_POWER : KEY_RESERVED;
+	return status & SMBA1002_KEY_POWER ? KEY_POWER : KEY_RESERVED;
 }
 
-static struct gpio_keys_platform_data smba1002_keys_platform_data = {
-	.buttons 	= smba1002_keys,
-	.nbuttons 	= ARRAY_SIZE(smba1002_keys),
-	.wakeup_key     = smba1002_wakeup_key,
+static struct gpio_keys_platform_data smba_keys_platform_data = {
+	.buttons 	= smba_keys,
+	.nbuttons 	= ARRAY_SIZE(smba_keys),
+	.wakeup_key     = smba_wakeup_key,
 	.rep		= false, /* auto repeat enabled */
 };
 
-static struct platform_device smba1002_keys_device = {
+static struct platform_device smba_keys_device = {
 	.name 		= "gpio-keys",
 	.id 		= 0,
 	.dev		= {
-		.platform_data = &smba1002_keys_platform_data,
+		.platform_data = &smba_keys_platform_data,
 	},
 };
 
 
-static struct platform_device *smba1002_pmu_devices[] __initdata = {
-	&smba1002_keys_device,
+static struct platform_device *smba_pmu_devices[] __initdata = {
+	&smba_keys_device,
 };
 
 /* Register all keyboard devices */
-int __init smba1002_keyboard_register_devices(void)
+int __init smba_keyboard_register_devices(void)
 {
-  	//enable_irq_wake(gpio_to_irq(TEGRA_WAKE_GPIO_PV2));
-	return platform_add_devices(smba1002_pmu_devices, ARRAY_SIZE(smba1002_pmu_devices));
+  	//enable_irq_wake(gpio_to_irq(SMBA1002_KEY_POWER));
+	return platform_add_devices(smba_pmu_devices, ARRAY_SIZE(smba_pmu_devices));
 }
 

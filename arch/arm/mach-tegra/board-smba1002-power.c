@@ -173,7 +173,8 @@ static struct regulator_consumer_supply tps658621_ldo6_supply[] = {
 */
 static struct regulator_consumer_supply tps658621_ldo7_supply[] = {
 	//REGULATOR_SUPPLY("vdd_ldo7", NULL),
-	REGULATOR_SUPPLY("avdd_hdmi", NULL)
+	REGULATOR_SUPPLY("avdd_hdmi", NULL),
+	REGULATOR_SUPPLY("vdd_fuse", NULL),
 };
 
 /* PLLHD voltage rail (HDMI) : AVDD_HDMI_PLL -> LDO8
@@ -392,14 +393,14 @@ static struct fixed_voltage_config ldo_tps2051B_cfg
 	} 	
 
 /* FIXME: do we have rtc alarm irq? */
-static struct tps6586x_rtc_platform_data smba1002_rtc_data = {
-	.irq	= TEGRA_NR_IRQS + TPS6586X_INT_RTC_ALM1,
+static struct tps6586x_rtc_platform_data smba_rtc_data = {
+	.irq  = -1, //we have no IRQ for RTC //TEGRA_NR_IRQS + TPS6586X_INT_RTC_ALM1,
         .start = {
 		.year = 2011,
 		.month = 12,
 		.day = 31,
         },
-	.cl_sel = TPS6586X_RTC_CL_SEL_1_5PF /* use lowest (external 20pF cap) */
+//	.cl_sel = TPS6586X_RTC_CL_SEL_1_5PF /* use lowest (external 20pF cap) */
 };
 
 static struct tps6586x_subdev_info tps_devs[] = {
@@ -424,7 +425,7 @@ static struct tps6586x_subdev_info tps_devs[] = {
 	{
 		.id		= -1,
 		.name		= "tps6586x-rtc",
-		.platform_data	= &smba1002_rtc_data,
+		.platform_data	= &smba_rtc_data,
 	},
 };
 
@@ -435,7 +436,7 @@ static struct tps6586x_platform_data tps_platform = {
 	.num_subdevs = ARRAY_SIZE(tps_devs),	
 };
 
-static struct i2c_board_info __initdata smba1002_regulators[] = {
+static struct i2c_board_info __initdata smba_regulators[] = {
 	{
 		I2C_BOARD_INFO("tps6586x", 0x34),
 		//.irq = INT_EXTERNAL_PMU,
@@ -453,10 +454,10 @@ static struct i2c_board_info __initdata smba1002_regulators[] = {
 		}, 								\
 	} 	
 
-static struct platform_device smba1002_ldo_tps2051B_reg_device = 
+static struct platform_device smba_ldo_tps2051B_reg_device = 
 	GPIO_FIXED_REG(3,ldo_tps2051B_cfg); /* id is 3, because 0-2 are already used in the PMU gpio controlled fixed regulators */
 /*
-static struct platform_device smba1002_vdd_aon_reg_device = 
+static struct platform_device smba_vdd_aon_reg_device = 
 {
 	.name = "reg-virtual-adj-voltage",
 	.id = 4,
@@ -493,7 +494,7 @@ static struct bq24610_mach_info bq24610_platform_data = {
 	.init_data = &bq24610_init_data,
 }
 
-static struct platform_device smba1002_bq24610_device= {
+static struct platform_device smba_bq24610_device= {
 	.name = "bq24610",
 	.dev = {
 		.platform_data = &bq24610_platform_data,
@@ -520,12 +521,12 @@ static void reg_off(const char *reg)
 	regulator_put(regulator);
 }
 
-static void smba1002_power_off(void)
+static void smba_power_off(void)
 {
 	 int ret;
 	 ret = tps6586x_power_off();
 	 if (ret)
-	      pr_err("smba1002: failed to power off\n");
+	      pr_err("smba: failed to power off\n");
 	 while(1);
   
   
@@ -589,7 +590,7 @@ static void tegra_sys_reset(char mode, const char *cmd)
 
 #if 0 
 static bool console_flushed;
-static void smba1002_flush_console(void)
+static void smba_flush_console(void)
 {
 	if (console_flushed)
 		return;
@@ -612,7 +613,7 @@ static void smba1002_flush_console(void)
 	release_console_sem();
 }
 
-static void smba1002_restart(char mode, const char *cmd)
+static void smba_restart(char mode, const char *cmd)
 {
 	/* USB power rail must be enabled during boot or we won't reboot*/
 	reg_on("avdd_usb");
@@ -621,7 +622,7 @@ static void smba1002_restart(char mode, const char *cmd)
 	//nvec_restart();
 	
 	/* Flush the console */
-	smba1002_flush_console();
+	smba_flush_console();
 	
 	/* Restart the machine - This will eventually pulse the reset line */
 	arm_machine_restart(mode, cmd);
@@ -688,7 +689,7 @@ struct platform_device tegra_rtc_device = {
 };
 #endif
 
-static struct platform_device *smba1002_power_devices[] __initdata = {
+static struct platform_device *smba_power_devices[] __initdata = {
 	//&adam_ldo_tps2051B_reg_device,
 	//&adam_vdd_aon_reg_device,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,38)	
@@ -696,13 +697,13 @@ static struct platform_device *smba1002_power_devices[] __initdata = {
 #else
 	&pmu_device,
 #endif
-	//&smba1002_nvec_mfd,
+	//&smba_nvec_mfd,
 	&tegra_rtc_device,
-	//&smba1002_bq24610_device,
+	//&smba_bq24610_device,
 };
 
 /* Init power management unit of Tegra2 */
-int __init smba1002_power_register_devices(void)
+int __init smba_power_register_devices(void)
 {
 	int err;
 	void __iomem *pmc = IO_ADDRESS(TEGRA_PMC_BASE);
@@ -714,12 +715,12 @@ int __init smba1002_power_register_devices(void)
 	pmc_ctrl = readl(pmc + PMC_CTRL);
 	writel(pmc_ctrl | PMC_CTRL_INTR_LOW, pmc + PMC_CTRL);
 
-	err = i2c_register_board_info(4, smba1002_regulators, 1);
+	err = i2c_register_board_info(4, smba_regulators, 1);
 	if (err < 0) 
 		pr_warning("Unable to initialize regulator\n");
 
 	/* register the poweroff callback */
-	pm_power_off = smba1002_power_off;		
+	pm_power_off = smba_power_off;		
 
 	/* And the restart callback */
 	tegra_setup_reboot();
@@ -730,6 +731,6 @@ int __init smba1002_power_register_devices(void)
 	/* register all pm devices - This must come AFTER the registration of the TPS i2c interfase,
 	   as we need the GPIO definitions exported by that driver */
 	//return 0;
-	return platform_add_devices(smba1002_power_devices, ARRAY_SIZE(smba1002_power_devices));
+	return platform_add_devices(smba_power_devices, ARRAY_SIZE(smba_power_devices));
 }
 

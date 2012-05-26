@@ -47,7 +47,7 @@
 #include "devices.h"
 
 
-static struct platform_device *smba1002_uart_devices[] __initdata = {
+static struct platform_device *smba_uart_devices[] __initdata = {
 	&tegra_uarta_device,
 	&tegra_uartb_device,
 	&tegra_uartc_device,
@@ -55,7 +55,7 @@ static struct platform_device *smba1002_uart_devices[] __initdata = {
 	&tegra_uarte_device,
 };
 
-int __init smba1002_uart_register_devices(void)
+int __init smba_uart_register_devices(void)
 {
-	return platform_add_devices(smba1002_uart_devices, ARRAY_SIZE(smba1002_uart_devices));
+	return platform_add_devices(smba_uart_devices, ARRAY_SIZE(smba_uart_devices));
 }

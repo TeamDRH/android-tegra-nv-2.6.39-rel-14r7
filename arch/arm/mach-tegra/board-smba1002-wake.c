@@ -36,24 +36,24 @@
 #include <linux/mfd/tps6586x.h>
 
 MODULE_AUTHOR("Dane Wagner <dane.wagner@gmail.com>");
-MODULE_DESCRIPTION("Wake smba1002 when power button is pressed");
+MODULE_DESCRIPTION("Wake smba when power button is pressed");
 MODULE_LICENSE("GPL");
 
-static void smba1002_wake_do_wake(struct work_struct *work) {
+static void smba_wake_do_wake(struct work_struct *work) {
 	// Need to queue this function since i2c is slow and this handler
 	// should be atomic.
 	tps6586x_cancel_sleep();
 }
-DECLARE_WORK(do_wake, smba1002_wake_do_wake);
+DECLARE_WORK(do_wake, smba_wake_do_wake);
 
-static void smba1002_wake_force_shutdown(struct work_struct *work) {
+static void smba_wake_force_shutdown(struct work_struct *work) {
 	// Need to queue this function since i2c is slow and this handler
 	// should be atomic.
 	tps6586x_power_off();
 }
-DECLARE_DELAYED_WORK(do_shutdown, smba1002_wake_force_shutdown);
+DECLARE_DELAYED_WORK(do_shutdown, smba_wake_force_shutdown);
 
-static void smba1002_wake_event(struct input_handle *handle, unsigned int type, unsigned int code, int value)
+static void smba_wake_event(struct input_handle *handle, unsigned int type, unsigned int code, int value)
 {
 	code = code;
 	if(type == EV_KEY && code == KEY_POWER) {
@@ -71,7 +71,7 @@ static void smba1002_wake_event(struct input_handle *handle, unsigned int type, 
   
 }
 
-static int smba1002_wake_connect(struct input_handler *handler, struct input_dev *dev,
+static int smba_wake_connect(struct input_handler *handler, struct input_dev *dev,
 			 const struct input_device_id *id)
 {
 	struct input_handle *handle;
@@ -83,7 +83,7 @@ static int smba1002_wake_connect(struct input_handler *handler, struct input_dev
 
 	handle->dev = dev;
 	handle->handler = handler;
-	handle->name = "smba1002_wake";
+	handle->name = "smba_wake";
 
 	error = input_register_handle(handle);
 	if (error)
@@ -93,7 +93,7 @@ static int smba1002_wake_connect(struct input_handler *handler, struct input_dev
 	if (error)
 		goto err_unregister_handle;
 
-	printk(KERN_DEBUG "smba1002_wake.c: Connected device: %s (%s at %s)\n",
+	printk(KERN_DEBUG "smba_wake.c: Connected device: %s (%s at %s)\n",
 		dev_name(&dev->dev),
 		dev->name ?: "unknown",
 		dev->phys ?: "unknown");
@@ -107,9 +107,9 @@ static int smba1002_wake_connect(struct input_handler *handler, struct input_dev
 	return error;
 }
 
-static void smba1002_wake_disconnect(struct input_handle *handle)
+static void smba_wake_disconnect(struct input_handle *handle)
 {
-	printk(KERN_DEBUG "smba1002_wake.c: Disconnected device: %s\n",
+	printk(KERN_DEBUG "smba_wake.c: Disconnected device: %s\n",
 		dev_name(&handle->dev->dev));
 
 	input_close_device(handle);
@@ -117,7 +117,7 @@ static void smba1002_wake_disconnect(struct input_handle *handle)
 	kfree(handle);
 }
 
-static const struct input_device_id smba1002_wake_ids[] = {
+static const struct input_device_id smba_wake_ids[] = {
   { .driver_info = 1,
     .vendor = 0x0001,
     .product = 0x0001,
@@ -126,32 +126,32 @@ static const struct input_device_id smba1002_wake_ids[] = {
   { },			/* Terminating zero entry */
 };
 
-MODULE_DEVICE_TABLE(input, smba1002_wake_ids);
+MODULE_DEVICE_TABLE(input, smba_wake_ids);
 
-static bool smba1002_wake_match(struct input_handler *handler,
+static bool smba_wake_match(struct input_handler *handler,
 			       struct input_dev *dev) {
   // TODO: look for EV_KEY: KEY_POWER capability
   return dev->name && strcmp("gpio-keys", dev->name) == 0;
 }
 
-static struct input_handler smba1002_wake_handler = {
-	.event =	smba1002_wake_event,
-	.connect =	smba1002_wake_connect,
-	.disconnect =	smba1002_wake_disconnect,
-	.name =		"smba1002_wake",
-	.id_table =	smba1002_wake_ids,
-	.match =        smba1002_wake_match,
+static struct input_handler smba_wake_handler = {
+	.event =	smba_wake_event,
+	.connect =	smba_wake_connect,
+	.disconnect =	smba_wake_disconnect,
+	.name =		"smba_wake",
+	.id_table =	smba_wake_ids,
+	.match =        smba_wake_match,
 };
 
-static int __init smba1002_wake_init(void)
+static int __init smba_wake_init(void)
 {
-	return input_register_handler(&smba1002_wake_handler);
+	return input_register_handler(&smba_wake_handler);
 }
 
-static void __exit smba1002_wake_exit(void)
+static void __exit smba_wake_exit(void)
 {
-	input_unregister_handler(&smba1002_wake_handler);
+	input_unregister_handler(&smba_wake_handler);
 }
 
-module_init(smba1002_wake_init);
-module_exit(smba1002_wake_exit);
+module_init(smba_wake_init);
+module_exit(smba_wake_exit);

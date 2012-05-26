@@ -128,5 +128,6 @@ extern int tps6586x_update(struct device *dev, int reg, uint8_t val,
 			   uint8_t mask);
 extern int tps6586x_power_off(void);
 extern int tps6586x_cancel_sleep(void);
+extern int tps6586x_suspend_led(int enable);
 
 #endif /*__LINUX_MFD_TPS6586X_H */

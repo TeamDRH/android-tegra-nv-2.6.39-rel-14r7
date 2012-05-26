@@ -126,7 +126,7 @@ static struct platform_device * tegra_usb_otg_host_register(void)
 	
 	/* Enable VBUS - This means we can power USB devices, but
 	   we cant use VBUS detection at all */
-	gpio_direction_input(SMBA1002_USB0_VBUS);
+	//gpio_direction_input(SMBA1002_USB0_VBUS);
 
 	/* Leave some time for stabilization purposes */
 	msleep(10);
@@ -177,7 +177,7 @@ static void tegra_usb_otg_host_unregister(struct platform_device *pdev)
 	   is plugged into the Tegra USB port, then we will 
 	   detect the power it supplies and go into gadget 
 	   mode */
-	gpio_direction_output(SMBA1002_USB0_VBUS, 0); 
+	//gpio_direction_output(SMBA1002_USB0_VBUS, 0); 
 
 	/* Leave some time for stabilization purposes - This 
 	   should unregister all attached devices, as they
@@ -199,7 +199,7 @@ static struct tegra_otg_platform_data tegra_otg_pdata = {
 #endif
 
 
-static struct platform_device *smba1002_usb_devices[] __initdata = {
+static struct platform_device *smba_usb_devices[] __initdata = {
 #ifdef CONFIG_USB_TEGRA_OTG
 	/* OTG should be the first to be registered */
 	&tegra_otg_device,
@@ -287,11 +287,18 @@ static struct attribute_group usb_attr_group = {
 
 #endif
 
-int __init smba1002_usb_register_devices(void)
+static void  __iomem *rst_device_reg = IO_ADDRESS(TEGRA_CLK_RESET_BASE);
+
+int __init smba_usb_register_devices(void)
 {
 #ifdef CONFIG_USB_SUPPORT
 	int ret;
 	
+  /* USB Plugged in on boot device hang fix */
+  writel(1 << SET_USBD_RST, (u32)rst_device_reg + CLK_RST_CONTROLLER_RST_DEV_L_SET_0);
+  udelay(5);
+  writel(1 << CLR_USBD_RST, (u32)rst_device_reg + CLK_RST_CONTROLLER_RST_DEV_L_CLR_0);
+
 	tegra_ehci1_device.dev.platform_data = &tegra_ehci_pdata[0];
 	tegra_ehci3_device.dev.platform_data = &tegra_ehci_pdata[1];
 #ifdef CONFIG_USB_TEGRA_OTG
@@ -304,7 +311,7 @@ int __init smba1002_usb_register_devices(void)
 	/* 0 = Gadget */
 	gpio_direction_output(SMBA1002_USB0_VBUS, 0 ); /* Gadget */
 	
-	ret = platform_add_devices(smba1002_usb_devices, ARRAY_SIZE(smba1002_usb_devices));
+	ret = platform_add_devices(smba_usb_devices, ARRAY_SIZE(smba_usb_devices));
 	if (ret)
 		return ret;
 
@@ -325,4 +332,3 @@ int __init smba1002_usb_register_devices(void)
 	return 0;
 #endif	
 }
-

@@ -1,233 +1,169 @@
 /*
- * Camera low power control via GPIO
+ * arch/arm/mach-tegra/board-smba1002-pm-camera.c
  *
- * Copyright (C) 2011 Eduardo José Tagle <ejtagle@tutopia.com>
+ * Copyright (C) 2012, Wanlida Group Co;Ltd.
  *
- * This software is licensed under the terms of the GNU General Public
- * License version 2, as published by the Free Software Foundation, and
- * may be copied, distributed, and modified under those terms.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- */ 
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
+ * 02111-1307, USA
+ */
 
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/platform_device.h>
+#include <linux/i2c.h>
 #include <linux/delay.h>
-#include <linux/err.h>
-#include <asm/mach-types.h>
-#include <asm/gpio.h>
-#include <asm/io.h>
-#include <asm/setup.h>
-#include <linux/if.h>
-#include <linux/skbuff.h>
-#include <linux/random.h>
-#include <linux/jiffies.h>
-#include <linux/delay.h>
-#include <linux/rfkill.h>
-#include <linux/mutex.h>
+#include <linux/gpio.h>
 #include <linux/regulator/consumer.h>
-
-#include <mach/hardware.h>
-#include <asm/mach-types.h>
-
-#include "board-smba1002.h"
+#include <linux/platform_device.h>
+#include <linux/err.h>
+#include <generated/mach-types.h>
+#include <mach/gpio.h>
+#include <media/s5k6aa.h>
 #include "gpio-names.h"
+#include "board.h"
+#include "board-smba1002.h"
 
-struct smba1002_pm_camera_data {
-	struct regulator *regulator;
-#ifdef CONFIG_PM
-	int pre_resume_state;
-#endif
-	int state;
-};
+static struct regulator *cam_ldo6 = NULL;
+static struct regulator *cam_ldo9 = NULL;
 
+#define S5K6AA_POWER_PIN TEGRA_GPIO_PBB5
+#define S5K6AA_RESET_PIN TEGRA_GPIO_PD2
+//#define TPS6586X_GPIO_BASE (TEGRA_NR_GPIOS)
+//#define AVDD_DSI_CSI_ENB_GPIO (TPS6586X_GPIO_BASE + 1) //gpio2
 
-/* Power control */
-static void __smba1002_pm_camera_power(struct device *dev, unsigned int on)
+static int smba_s5k6aa_power_on(void)
 {
-	struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(dev);
-
-	/* Avoid turning it on if already on */
-	if (camera_data->state == on)
-		return;
-	
-	if (on) {
-		dev_info(dev, "Enabling Camera\n");
-	
-		regulator_enable(camera_data->regulator);
-	
-		/* Camera power on sequence */
-		gpio_set_value(SMBA1002_CAMERA_POWER, 0); /* Powerdown */
-		msleep(2);
-		gpio_set_value(SMBA1002_CAMERA_POWER, 1); /* Powerup */
-		msleep(2);
-
-		
-	} else {
-		dev_info(dev, "Disabling Camera\n");
-		
-		gpio_set_value(SMBA1002_CAMERA_POWER, 0); /* Powerdown */
-		
-		regulator_disable(camera_data->regulator);
-
-	}
-	
-	/* store new state */
-	camera_data->state = on;
-	
-}
-
-static ssize_t camera_read(struct device *dev, struct device_attribute *attr,
-		       char *buf)
-{
-	int ret = 0;
-	struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(dev);
-	
-	if (!strcmp(attr->attr.name, "power_on")) {
-		if (camera_data->state)
-			ret = 1;
-	}
-
-	if (!ret) {
-		return strlcpy(buf, "0\n", 3);
-	} else {
-		return strlcpy(buf, "1\n", 3);
-	}
-}
-
-static ssize_t camera_write(struct device *dev, struct device_attribute *attr,
-			const char *buf, size_t count)
-{
-	unsigned long on = simple_strtoul(buf, NULL, 10);
-	/*struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(dev);*/
-
-	if (!strcmp(attr->attr.name, "power_on")) {
-		__smba1002_pm_camera_power(dev, on);
-	} 
-
-	return count;
-}
-
-static DEVICE_ATTR(power_on, 0644, camera_read, camera_write);
-static DEVICE_ATTR(reset, 0644, camera_read, camera_write);
-
-#ifdef CONFIG_PM
-static int smba1002_camera_suspend(struct platform_device *pdev, pm_message_t state)
-{
-	struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(&pdev->dev);
-
-	dev_dbg(&pdev->dev, "suspending\n");
-
-	camera_data->pre_resume_state = camera_data->state;
-	__smba1002_pm_camera_power(&pdev->dev, 0);
-
+	gpio_direction_output(S5K6AA_POWER_PIN, 1);
+	mdelay(10);
+	gpio_direction_output(S5K6AA_RESET_PIN, 1);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_RESET_PIN, 0);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_RESET_PIN, 1);
+	mdelay(5);
 	return 0;
 }
 
-static int smba1002_camera_resume(struct platform_device *pdev)
+static int smba_s5k6aa_power_off(void)
 {
-	struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(&pdev->dev);
-	dev_dbg(&pdev->dev, "resuming\n");
-
-	__smba1002_pm_camera_power(&pdev->dev, camera_data->pre_resume_state);
-	return 0;
-}
-#else
-#define smba1002_camera_suspend	NULL
-#define smba1002_camera_resume		NULL
-#endif
-
-static struct attribute *smba1002_camera_sysfs_entries[] = {
-	&dev_attr_power_on.attr,
-	&dev_attr_reset.attr,
-	NULL
-};
-
-static struct attribute_group smba1002_camera_attr_group = {
-	.name	= NULL,
-	.attrs	= smba1002_camera_sysfs_entries,
-};
-
-/* ----- Initialization/removal -------------------------------------------- */
-static int __init smba1002_camera_probe(struct platform_device *pdev)
-{
-	struct regulator *regulator;
-	struct smba1002_pm_camera_data *camera_data;
-
-	camera_data = kzalloc(sizeof(*camera_data), GFP_KERNEL);
-	if (!camera_data) {
-		dev_err(&pdev->dev, "no memory for context\n");
-		return -ENOMEM;
-	}
-	dev_set_drvdata(&pdev->dev, camera_data);
-
-	regulator = regulator_get(&pdev->dev, "vdd_camera");
-	if (IS_ERR(regulator)) {
-		dev_err(&pdev->dev, "unable to get regulator 0\n");
-		kfree(camera_data);
-		dev_set_drvdata(&pdev->dev, NULL);
-		return -ENODEV;
-	}
-
-	camera_data->regulator = regulator;
-
-	
-	/* Init io pins and disable camera */
-	gpio_request(SMBA1002_CAMERA_POWER, "camera_power");
-	gpio_direction_output(SMBA1002_CAMERA_POWER, 0);
-
-	dev_info(&pdev->dev, "Camera power management driver registered\n");
-	
-	return sysfs_create_group(&pdev->dev.kobj, &smba1002_camera_attr_group);
-}
-
-static int smba1002_camera_remove(struct platform_device *pdev)
-{
-	struct smba1002_pm_camera_data *camera_data = dev_get_drvdata(&pdev->dev);
-
-	sysfs_remove_group(&pdev->dev.kobj, &smba1002_camera_attr_group);
-
-	if (!camera_data || !camera_data->regulator)
-		return 0;
-
-	__smba1002_pm_camera_power(&pdev->dev, 0);
-	
-	regulator_put(camera_data->regulator);	
-
-	kfree(camera_data);
-	dev_set_drvdata(&pdev->dev, NULL);
-	
+	gpio_direction_output(S5K6AA_POWER_PIN, 0);
+	gpio_direction_output(S5K6AA_RESET_PIN, 1);
+	mdelay(10);
 	return 0;
 }
 
-static struct platform_driver smba1002_camera_driver_ops = {
-	.probe		= smba1002_camera_probe,
-	.remove		= smba1002_camera_remove,
-	.suspend	= smba1002_camera_suspend,
-	.resume		= smba1002_camera_resume,
-	.driver		= {
-		.name		= "smba1002-pm-camera",
+static int smba_s5k6aa_reset(void)
+{
+	gpio_direction_output(S5K6AA_POWER_PIN, 0);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_POWER_PIN, 1);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_RESET_PIN, 1);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_RESET_PIN, 0);
+	mdelay(5);
+	gpio_direction_output(S5K6AA_RESET_PIN, 1);
+	mdelay(5);
+	return 0;
+}
+
+struct s5k6aa_platform_data smba_s5k6aa_data = {
+	.power_on = smba_s5k6aa_power_on,
+	.power_off = smba_s5k6aa_power_off,
+	.reset = smba_s5k6aa_reset,
+};
+
+static struct i2c_board_info smba_i2c3_board_info_camera[] = {
+	{
+		I2C_BOARD_INFO("s5k6aa",  0x3e),
+		.platform_data = &smba_s5k6aa_data,
 	},
 };
+struct tegra_camera_gpios {
+	const char *name;
+	int gpio;
+	int enabled;
+};
 
-static int __devinit smba1002_camera_init(void)
+#define TEGRA_CAMERA_GPIO(_name, _gpio, _enabled) \
+	{ \
+		.name = _name, \
+		.gpio = _gpio, \
+		.enabled = _enabled, \
+	}
+
+static struct tegra_camera_gpios tegra_camera_gpio_keys[] = {
+//	TEGRA_CAMERA_GPIO("en_avdd_csi", AVDD_DSI_CSI_ENB_GPIO, 1),
+	TEGRA_CAMERA_GPIO("s5k6aa_power_down", S5K6AA_POWER_PIN, 0),
+	TEGRA_CAMERA_GPIO("s5k6aa_resest", S5K6AA_RESET_PIN, 1),
+};
+
+static int init_camera_gpio(void)
 {
-	return platform_driver_register(&smba1002_camera_driver_ops);
+	int i, ret;
+
+	for (i = 0; i < ARRAY_SIZE(tegra_camera_gpio_keys); i++) {
+		tegra_gpio_enable(tegra_camera_gpio_keys[i].gpio);
+		ret = gpio_request(tegra_camera_gpio_keys[i].gpio,
+				tegra_camera_gpio_keys[i].name);
+		if (ret < 0) {
+			pr_err("%s: gpio_request failed for gpio #%d (%s)\n",
+				__func__, tegra_camera_gpio_keys[i].gpio,
+				tegra_camera_gpio_keys[i].name);
+			continue;
+		}
+		gpio_direction_output(tegra_camera_gpio_keys[i].gpio,
+				tegra_camera_gpio_keys[i].enabled);
+		gpio_export(tegra_camera_gpio_keys[i].gpio, false);
+	}
+
+	return 0;
 }
 
-static void smba1002_camera_exit(void)
+int __init smba_camera_init(void)
 {
-	platform_driver_unregister(&smba1002_camera_driver_ops);
+	int i, ret;
+	struct i2c_client *client;
+	struct i2c_adapter *adapter;
+
+	pr_info("smba camera init!\n");
+
+	init_camera_gpio();
+
+//	cam_ldo6 = regulator_get(NULL, "vdd_ldo6");
+//	if (IS_ERR_OR_NULL(cam_ldo6)) {
+//		pr_err("camera : can't get vdd_ldo6\n");
+//		return -EFAULT;
+//	}
+//	cam_ldo9 = regulator_get(NULL, "vdd_ldo9");
+//	if (IS_ERR_OR_NULL(cam_ldo9)) {
+//		pr_err("camera : can't get vdd_ldo6");
+//		return -EFAULT;
+//	}
+
+	adapter = i2c_get_adapter(3);
+	if (adapter == NULL) {
+		pr_err("camera : can't get i2c bus #3 adapter\n");
+		return -EFAULT;
+	}
+	for (i = 0; i < ARRAY_SIZE(smba_i2c3_board_info_camera); i++) {
+		client = i2c_new_device(adapter,
+				&smba_i2c3_board_info_camera[i]);
+		if (client == NULL) {
+			pr_err("camera : register camera #%d failed\n", i);
+			return -EFAULT;
+		}
+	}
+	i2c_put_adapter(adapter);
+
+	return ret;
 }
-
-module_init(smba1002_camera_init);
-module_exit(smba1002_camera_exit);
-
-MODULE_LICENSE("GPL");
-MODULE_AUTHOR("Eduardo José Tagle <ejtagle@tutopia.com>");
-MODULE_DESCRIPTION("Shuttle CAMERA power management");
+late_initcall(smba_camera_init);

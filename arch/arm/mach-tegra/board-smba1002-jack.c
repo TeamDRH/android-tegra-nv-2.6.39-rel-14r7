@@ -28,7 +28,7 @@
 #include "gpio-names.h"
 #include "board-smba1002.h"
 
-static struct wired_jack_conf smba1002_wr_jack_conf = {
+static struct wired_jack_conf smba_wr_jack_conf = {
 	.hp_det_n = SMBA1002_HP_DETECT,
 	.en_mic_ext = -1,
 	.en_mic_int = -1,
@@ -37,23 +37,23 @@ static struct wired_jack_conf smba1002_wr_jack_conf = {
 //	.spkr_amp_reg = "avdd_amp"
 };
 
-static struct platform_device smba1002_hs_jack_device = {
+static struct platform_device smba_hs_jack_device = {
 	.name = "tegra_wired_jack",
 	.id = -1,
 	.dev = {
-		.platform_data = &smba1002_wr_jack_conf,
+		.platform_data = &smba_wr_jack_conf,
 	},
 };
 
-int __init smba1002_jack_register_devices(void)
+int __init smba_jack_register_devices(void)
 {
 	int ret;
 
-	tegra_gpio_enable(smba1002_wr_jack_conf.hp_det_n);
-//	tegra_gpio_enable(smba1002_wr_jack_conf.en_mic_int);
-//	tegra_gpio_enable(smba1002_wr_jack_conf.en_mic_ext);
-//	tegra_gpio_enable(smba1002_wr_jack_conf.cdc_irq);
+	tegra_gpio_enable(smba_wr_jack_conf.hp_det_n);
+//	tegra_gpio_enable(smba_wr_jack_conf.en_mic_int);
+//	tegra_gpio_enable(smba_wr_jack_conf.en_mic_ext);
+//	tegra_gpio_enable(smba_wr_jack_conf.cdc_irq);
 
-	ret = platform_device_register(&smba1002_hs_jack_device);
+	ret = platform_device_register(&smba_hs_jack_device);
 	return ret;
 }

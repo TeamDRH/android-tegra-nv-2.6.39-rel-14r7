@@ -46,17 +46,17 @@
 
 #define PMC_WAKE_STATUS 0x14
 
-static int smba1002_was_wakeup(void)
+static int smba_was_wakeup(void)
 {
 	unsigned long status = 
 		readl(IO_ADDRESS(TEGRA_PMC_BASE) + PMC_WAKE_STATUS);
-	return status & TEGRA_WAKE_GPIO_PV2 ? 1 : 0;
+	return status & SMBA1002_KEY_POWER ? 1 : 0;
 } 
 
 static int bootinfo_show(struct seq_file *m, void *v)
 {
 	seq_printf(m, "POWERUPREASON : 0x%08x\n",
-		smba1002_was_wakeup());
+		smba_was_wakeup());
 
 	seq_printf(m, "BOARDREVISION : 0x%08x\n",
 		0x01);

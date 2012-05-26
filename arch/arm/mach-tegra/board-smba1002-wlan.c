@@ -44,17 +44,17 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device smba1002_wlan_pm_device = {
-	.name		= "smba1002-pm-wlan",
+static struct platform_device smba_wlan_pm_device = {
+	.name		= "smba-pm-wlan",
 	.id			= -1,
 };
 
 
-static struct platform_device *smba1002_wlan_pm_devices[] __initdata = {
-	&smba1002_wlan_pm_device,
+static struct platform_device *smba_wlan_pm_devices[] __initdata = {
+	&smba_wlan_pm_device,
 };
 
-int __init smba1002_wlan_pm_register_devices(void)
+int __init smba_wlan_pm_register_devices(void)
 {
-	return platform_add_devices(smba1002_wlan_pm_devices, ARRAY_SIZE(smba1002_wlan_pm_devices));
+	return platform_add_devices(smba_wlan_pm_devices, ARRAY_SIZE(smba_wlan_pm_devices));
 }

@@ -44,14 +44,14 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device *smba1002_spi_devices[] __initdata = {
+static struct platform_device *smba_spi_devices[] __initdata = {
 	&tegra_spi_device1,
 	&tegra_spi_device2,
 	&tegra_spi_device3,
-	&tegra_spi_device4,
+	//&tegra_spi_device4,
 };
 
-int __init smba1002_spi_register_devices(void)
+int __init smba_spi_register_devices(void)
 {
-	return platform_add_devices(smba1002_spi_devices, ARRAY_SIZE(smba1002_spi_devices));
+	return platform_add_devices(smba_spi_devices, ARRAY_SIZE(smba_spi_devices));
 }

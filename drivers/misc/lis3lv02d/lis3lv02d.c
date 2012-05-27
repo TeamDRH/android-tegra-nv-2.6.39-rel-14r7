@@ -44,7 +44,7 @@
 #define DRIVER_NAME     "lis3lv02d"
 
 /* joystick device poll interval in milliseconds */
-#define MDPS_POLL_INTERVAL 50
+#define MDPS_POLL_INTERVAL 30
 #define MDPS_POLL_MIN	   0
 #define MDPS_POLL_MAX	   2000
 

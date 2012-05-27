@@ -61,147 +61,6 @@
 	Codec MCLK = APxx DAP_MCLK1
 */
 
-#ifdef USE_ORG_DAS
-
-#include <mach/tegra_das.h>
-
-static struct tegra_das_platform_data tegra_das_pdata = {
-	.dap_clk = "clk_dev1",
-	.tegra_dap_port_info_table = {
-		/* I2S1 <--> DAC1 <--> DAP1 <--> Hifi Codec */
-		[0] = {
-			.dac_port = tegra_das_port_i2s1,
-			.dap_port = tegra_das_port_dap1,
-			.codec_type = tegra_audio_codec_type_hifi,
-			.device_property = {
-				.num_channels = 2,
-				.bits_per_sample = 16,
-#ifdef SMBA1002_48KHZ_AUDIO				
-				.rate = 48000,
-#else
-				.rate = 44100,
-#endif
-				.dac_dap_data_comm_format =
-						dac_dap_data_format_all,
-			},
-		},
-		/* I2S2 <--> DAC2 <--> DAP2 <--> Voice Codec */
-		[1] = {
-			.dac_port = tegra_das_port_i2s2,
-			.dap_port = tegra_das_port_dap2,
-			.codec_type = tegra_audio_codec_type_voice,
-			.device_property = {
-				.num_channels = 1,
-				.bits_per_sample = 16,
-				.rate = 8000,
-				.dac_dap_data_comm_format =
-						dac_dap_data_format_all,
-			},
-		},
-		/* I2S2 <--> DAC2 <--> DAP3 <--> Baseband Codec */
-		[2] = {
-			.dac_port = tegra_das_port_i2s2,
-			.dap_port = tegra_das_port_dap3,
-			.codec_type = tegra_audio_codec_type_baseband,
-			.device_property = {
-				.num_channels = 1,
-				.bits_per_sample = 16,
-				.rate = 8000,
-				.dac_dap_data_comm_format =
-					dac_dap_data_format_dsp,
-			},
-		},
-		/* I2S2 <--> DAC2 <--> DAP4 <--> BT SCO Codec */
-		[3] = {
-			.dac_port = tegra_das_port_i2s2,
-			.dap_port = tegra_das_port_dap4,
-			.codec_type = tegra_audio_codec_type_bluetooth,
-			.device_property = {
-				.num_channels = 1,
-				.bits_per_sample = 16,
-				.rate = 8000,
-				.dac_dap_data_comm_format =
-					dac_dap_data_format_dsp,
-			},
-		},
-		[4] = {
-			.dac_port = tegra_das_port_none,
-			.dap_port = tegra_das_port_none,
-			.codec_type = tegra_audio_codec_type_none,
-			.device_property = {
-				.num_channels = 0,
-				.bits_per_sample = 0,
-				.rate = 0,
-				.dac_dap_data_comm_format = 0,
-			},
-		},
-	},
-
-	.tegra_das_con_table = {
-		[0] = {
-			.con_id = tegra_das_port_con_id_hifi,
-			.num_entries = 2,
-			.con_line = { /*src*/            /*dst*/             /* src master */
-#ifdef ALC5623_IS_MASTER			
-				[0] = {tegra_das_port_i2s1, tegra_das_port_dap1, true}, 
-				[1] = {tegra_das_port_dap1, tegra_das_port_i2s1, false},
-#else
-				[0] = {tegra_das_port_i2s1, tegra_das_port_dap1, false}, 
-				[1] = {tegra_das_port_dap1, tegra_das_port_i2s1, true},
-#endif
-			},
-		},
-		[1] = {
-			.con_id = tegra_das_port_con_id_bt_codec,
-			.num_entries = 4,
-			.con_line = {
-				[0] = {tegra_das_port_i2s2, tegra_das_port_dap4, true}, /* src is master */
-				[1] = {tegra_das_port_dap4, tegra_das_port_i2s2, false},
-#ifdef ALC5623_IS_MASTER
-				[2] = {tegra_das_port_i2s1, tegra_das_port_dap1, true},
-				[3] = {tegra_das_port_dap1, tegra_das_port_i2s1, false},
-#else				
-				[2] = {tegra_das_port_i2s1, tegra_das_port_dap1, false},
-				[3] = {tegra_das_port_dap1, tegra_das_port_i2s1, true},
-#endif				
-			},
-		},
-		[2] = {
-			.con_id = tegra_das_port_con_id_voicecall_no_bt,
-			.num_entries = 4,
-			.con_line = {
-				[0] = {tegra_das_port_dap2, tegra_das_port_dap3, true},
-				[1] = {tegra_das_port_dap3, tegra_das_port_dap2, false},
-#ifdef ALC5623_IS_MASTER
-				[2] = {tegra_das_port_i2s1, tegra_das_port_dap1, true},
-				[3] = {tegra_das_port_dap1, tegra_das_port_i2s1, false},
-#else
-				[2] = {tegra_das_port_i2s1, tegra_das_port_dap1, false},
-				[3] = {tegra_das_port_dap1, tegra_das_port_i2s1, true},
-#endif
-			},
-		},
-	}
-};  
-
-static struct resource das_resource[] = {
-	[0] = {
-		.start	= TEGRA_APB_MISC_BASE,
-		.end	= TEGRA_APB_MISC_BASE + TEGRA_APB_MISC_SIZE - 1,
-		.flags	= IORESOURCE_MEM
-	}
-};
-
-static struct platform_device das_device = {
-	.name		= "tegra_das",
-	.id		= -1,
-	.resource	= das_resource,
-	.num_resources	= ARRAY_SIZE(das_resource),
-	.dev = {
-		.platform_data = &tegra_das_pdata,
-	}
-}; 
-#endif
 
 static struct tegra_audio_platform_data tegra_spdif_pdata = {
 	.dma_on			= true,  /* use dma by default */
@@ -267,8 +126,8 @@ static struct alc5623_platform_data smba_alc5623_pdata = {
 
 	.mic1bias_mv		= 2475,	/* MIC1 bias voltage */
 	.mic2bias_mv		= 2475,	/* MIC2 bias voltage */
-	.mic1boost_db    	= 30,  /* MIC1 gain boost */
-	.mic2boost_db   	= 30,  /* MIC2 gain boost */
+	.mic1boost_db    	= 20,  /* MIC1 gain boost */
+	.mic2boost_db   	= 20,  /* MIC2 gain boost */
 
 	.default_is_mic2 	= false,	/* SMBA1002 uses MIC1 as the default capture source */
 
@@ -286,7 +145,6 @@ static struct tegra_alc5623_platform_data smba_audio_pdata = {
         .gpio_spkr_en           = -2,
         .gpio_hp_det            = SMBA1002_HP_DETECT,
 	.gpio_int_mic_en 	= SMBA1002_INT_MIC_EN,
-#ifndef USE_ORG_DAS	
 	.hifi_codec_datafmt = SND_SOC_DAIFMT_I2S,	/* HiFi codec data format */
 #ifdef ALC5623_IS_MASTER
 	.hifi_codec_master  = true,					/* If Hifi codec is master */
@@ -295,7 +153,6 @@ static struct tegra_alc5623_platform_data smba_audio_pdata = {
 #endif
 	.bt_codec_datafmt   = SND_SOC_DAIFMT_DSP_A,	/* Bluetooth codec data format */
 	.bt_codec_master    = true,					/* If bt codec is master */
-#endif
 
 };
 
@@ -317,11 +174,7 @@ static struct platform_device *smba_i2s_devices[] __initdata = {
 	&tegra_i2s_device1,
 	&tegra_i2s_device2,
 	&tegra_spdif_device,
-#ifdef USE_ORG_DAS
-	&das_device,
-#else
 	&tegra_das_device,
-#endif
 	&spdif_dit_device,
 	&tegra_pcm_device,
 	&tegra_generic_codec,

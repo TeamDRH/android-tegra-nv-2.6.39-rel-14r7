@@ -120,7 +120,7 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 
         /* pll_d */
 	{ "pll_d",		"clk_m", 	  5000000,	true},			/* hdmi clock */
-	{ "dsia",		"pll_d_out0",	   0,	false},		/* tegra_dc.0, tegra_dc.1 - bug on kernel 2.6.36*/
+	{ "dsi",		"pll_d_out0",	   0,	false},		/* tegra_dc.0, tegra_dc.1 - bug on kernel 2.6.36*/
 	{ "pll_d_out0",		"pll_d", 	   250000,	true}, 		/* hdmi clock */
 
 	/* pll_s generates the master clock */

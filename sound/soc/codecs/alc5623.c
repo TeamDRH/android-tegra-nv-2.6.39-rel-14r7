@@ -49,7 +49,6 @@ struct alc5623_priv {
 	unsigned int	avdd_mv;		/* Analog vdd in millivolts */
 
 	unsigned int	mic1bias_mv;	/* MIC1 bias voltage */
-	unsigned int	mic2bias_mv;	/* MIC2	bias voltage */
 	unsigned int	mic1boost_db;	/* MIC1 gain boost */
 	unsigned int	mic2boost_db;	/* MIC1 gain boost */
 
@@ -936,7 +935,6 @@ static int alc5623_probe(struct snd_soc_codec *codec)
 	struct snd_soc_dapm_context *dapm = &codec->dapm;
 	int ret;
 	int mic1ratio;
-	int mic2ratio;
 	unsigned long reg;
 
 	ret = snd_soc_codec_set_cache_io(codec, 8, 16, alc5623->control_type);
@@ -963,17 +961,15 @@ static int alc5623_probe(struct snd_soc_codec *codec)
 
 	/* Configure MIC bias levels and gains */
 	mic1ratio = (alc5623->mic1bias_mv * 100) / alc5623->avdd_mv;
-	mic2ratio = (alc5623->mic2bias_mv * 100) / alc5623->avdd_mv;
 	reg = 0;
 	if (mic1ratio <= 75) reg |= (1 << 5);
-	if (mic2ratio <= 75) reg |= (1 << 4);
 	if (alc5623->mic1boost_db >= 30) 	reg |= (2 << 10);
 	else if (alc5623->mic1boost_db >= 20) 	reg |= (1 << 10);
 	if (alc5623->mic2boost_db >= 30) 	reg |= (2 << 8);
 	else if (alc5623->mic2boost_db >= 20) 	reg |= (1 << 8);
 	
 	/* Write the MIC configuration */
-	snd_soc_update_bits(codec, ALC5623_MIC_CTRL, 0x0F30, reg);
+	snd_soc_update_bits(codec, ALC5623_MIC_CTRL, 0x0F20, reg);
 	
 	/* Select the default MIC source */
 	snd_soc_update_bits(codec, ALC5623_ADC_REC_MIXER, 0x6060, 
@@ -1111,7 +1107,6 @@ static int alc5623_i2c_probe(struct i2c_client *client,
 
 	/* And the settings used for mics */
 	alc5623->mic1bias_mv = pdata->mic1bias_mv;			/* MIC1 bias voltage */
-	alc5623->mic2bias_mv = pdata->mic2bias_mv;			/* MIC2	bias voltage */
 	alc5623->mic1boost_db = pdata->mic1boost_db;		/* MIC1 gain boost */
 	alc5623->mic2boost_db = pdata->mic2boost_db;		/* MIC2 gain boost */
 	alc5623->default_is_mic2 = pdata->default_is_mic2;	/* If MIC2 is the default MIC or not */

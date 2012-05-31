@@ -125,7 +125,6 @@ static struct alc5623_platform_data smba_alc5623_pdata = {
 	.avdd_mv		= 3300,	/* Analog vdd in millivolts */
 
 	.mic1bias_mv		= 2475,	/* MIC1 bias voltage */
-	.mic2bias_mv		= 2475,	/* MIC2 bias voltage */
 	.mic1boost_db    	= 20,  /* MIC1 gain boost */
 	.mic2boost_db   	= 20,  /* MIC2 gain boost */
 

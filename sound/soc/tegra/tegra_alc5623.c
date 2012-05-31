@@ -90,20 +90,20 @@
 #endif
 
 /* possible audio sources */
-enum shuttle_audio_device {
-	ADAM_AUDIO_DEVICE_NONE	   = 0,		/* no device */
-	ADAM_AUDIO_DEVICE_BLUETOOTH = 0x01,	/* bluetooth */
-	ADAM_AUDIO_DEVICE_VOICE	   = 0x02,	/* cell phone audio */
-	ADAM_AUDIO_DEVICE_HIFI	   = 0x04,	/* normal speaker/headphone audio */
+enum tegra_audio_device {
+	SND_AUDIO_DEVICE_NONE	   = 0,		/* no device */
+	SND_AUDIO_DEVICE_BLUETOOTH = 0x01,	/* bluetooth */
+	SND_AUDIO_DEVICE_VOICE	   = 0x02,	/* cell phone audio */
+	SND_AUDIO_DEVICE_HIFI	   = 0x04,	/* normal speaker/headphone audio */
 	
-	ADAM_AUDIO_DEVICE_MAX	   = 0x07	/* all audio sources */
+	SND_AUDIO_DEVICE_MAX	   = 0x07	/* all audio sources */
 };
 
 struct tegra_alc5623 {
 	struct tegra_asoc_utils_data util_data;
 	struct tegra_alc5623_platform_data *pdata;
 	struct regulator *spk_reg;
-	struct regulator *dmic_reg;
+//	struct regulator *dmic_reg;
 	int gpio_requested;
 	bool swap_channels;
 #ifdef CONFIG_SWITCH
@@ -466,10 +466,10 @@ static void tegra_audio_route(struct tegra_alc5623* machine,
 			      int play_device, int capture_device)
 {
 	
-	int is_bt_sco_mode = (play_device    & ADAM_AUDIO_DEVICE_BLUETOOTH) ||
-						 (capture_device & ADAM_AUDIO_DEVICE_BLUETOOTH);
-	int is_call_mode   = (play_device    & ADAM_AUDIO_DEVICE_VOICE) ||
-						 (capture_device & ADAM_AUDIO_DEVICE_VOICE);
+	int is_bt_sco_mode = (play_device    & SND_AUDIO_DEVICE_BLUETOOTH) ||
+						 (capture_device & SND_AUDIO_DEVICE_BLUETOOTH);
+	int is_call_mode   = (play_device    & SND_AUDIO_DEVICE_VOICE) ||
+						 (capture_device & SND_AUDIO_DEVICE_VOICE);
 
 	pr_debug("%s(): is_bt_sco_mode: %d, is_call_mode: %d\n", __FUNCTION__, is_bt_sco_mode, is_call_mode);
 
@@ -496,8 +496,8 @@ static int tegra_play_route_info(struct snd_kcontrol *kcontrol,
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = ADAM_AUDIO_DEVICE_NONE;
-	uinfo->value.integer.max = ADAM_AUDIO_DEVICE_MAX;
+	uinfo->value.integer.min = SND_AUDIO_DEVICE_NONE;
+	uinfo->value.integer.max = SND_AUDIO_DEVICE_MAX;
 	return 0;
 }
 
@@ -506,7 +506,7 @@ static int tegra_play_route_get(struct snd_kcontrol *kcontrol,
 {
 	struct tegra_alc5623* machine = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = ADAM_AUDIO_DEVICE_NONE;
+	ucontrol->value.integer.value[0] = SND_AUDIO_DEVICE_NONE;
 	if (machine) {
 		ucontrol->value.integer.value[0] = machine->play_device;
 		return 0;
@@ -546,8 +546,8 @@ static int tegra_capture_route_info(struct snd_kcontrol *kcontrol,
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
 	uinfo->count = 1;
-	uinfo->value.integer.min = ADAM_AUDIO_DEVICE_NONE;
-	uinfo->value.integer.max = ADAM_AUDIO_DEVICE_MAX;
+	uinfo->value.integer.min = SND_AUDIO_DEVICE_NONE;
+	uinfo->value.integer.max = SND_AUDIO_DEVICE_MAX;
 	return 0;
 }
 
@@ -556,7 +556,7 @@ static int tegra_capture_route_get(struct snd_kcontrol *kcontrol,
 {
 	struct tegra_alc5623* machine = snd_kcontrol_chip(kcontrol);
 
-	ucontrol->value.integer.value[0] = ADAM_AUDIO_DEVICE_NONE;
+	ucontrol->value.integer.value[0] = SND_AUDIO_DEVICE_NONE;
 	if (machine) {
 		ucontrol->value.integer.value[0] = machine->capture_device;
 		return 0;
@@ -609,8 +609,8 @@ static int tegra_call_mode_get(struct snd_kcontrol *kcontrol,
 
 	ucontrol->value.integer.value[0] = 0;
 	if (machine) {
-		int is_call_mode   = (machine->play_device    & ADAM_AUDIO_DEVICE_VOICE) ||
-							 (machine->capture_device & ADAM_AUDIO_DEVICE_VOICE);
+		int is_call_mode   = (machine->play_device    & SND_AUDIO_DEVICE_VOICE) ||
+							 (machine->capture_device & SND_AUDIO_DEVICE_VOICE);
 	
 		ucontrol->value.integer.value[0] = is_call_mode ? 1 : 0;
 		return 0;
@@ -624,22 +624,22 @@ static int tegra_call_mode_put(struct snd_kcontrol *kcontrol,
 	struct tegra_alc5623* machine = snd_kcontrol_chip(kcontrol);
 
 	if (machine) {
-		int is_call_mode   = (machine->play_device    & ADAM_AUDIO_DEVICE_VOICE) ||
-							 (machine->capture_device & ADAM_AUDIO_DEVICE_VOICE);
+		int is_call_mode   = (machine->play_device    & SND_AUDIO_DEVICE_VOICE) ||
+							 (machine->capture_device & SND_AUDIO_DEVICE_VOICE);
 	
 		int is_call_mode_new = ucontrol->value.integer.value[0];
 
 		if (is_call_mode != is_call_mode_new) {
 			if (is_call_mode_new) {
-				machine->play_device 	|= ADAM_AUDIO_DEVICE_VOICE;
-				machine->capture_device |= ADAM_AUDIO_DEVICE_VOICE;
-				machine->play_device 	&= ~ADAM_AUDIO_DEVICE_HIFI;
-				machine->capture_device &= ~ADAM_AUDIO_DEVICE_HIFI;
+				machine->play_device 	|= SND_AUDIO_DEVICE_VOICE;
+				machine->capture_device |= SND_AUDIO_DEVICE_VOICE;
+				machine->play_device 	&= ~SND_AUDIO_DEVICE_HIFI;
+				machine->capture_device &= ~SND_AUDIO_DEVICE_HIFI;
 			} else {
-				machine->play_device 	&= ~ADAM_AUDIO_DEVICE_VOICE;
-				machine->capture_device &= ~ADAM_AUDIO_DEVICE_VOICE;
-				machine->play_device 	|= ADAM_AUDIO_DEVICE_HIFI;
-				machine->capture_device |= ADAM_AUDIO_DEVICE_HIFI;
+				machine->play_device 	&= ~SND_AUDIO_DEVICE_VOICE;
+				machine->capture_device &= ~SND_AUDIO_DEVICE_VOICE;
+				machine->play_device 	|= SND_AUDIO_DEVICE_HIFI;
+				machine->capture_device |= SND_AUDIO_DEVICE_HIFI;
 			}
 			tegra_audio_route(machine,
 				machine->play_device,
@@ -793,7 +793,7 @@ static int tegra_alc5623_event_int_spk(struct snd_soc_dapm_widget *w,
 
 
 	/*
-	*  Manage both amps in the Adam board.
+	*  Manage both amps in the SMBA board.
 	*  Don't turn them on the first enable of the internal speaker.
 	*  This is to prevent the whine that results before the
 	*  userspace lib can set up the audio pathing.
@@ -849,22 +849,25 @@ static int tegra_alc5623_event_int_mic(struct snd_soc_dapm_widget *w,
         struct snd_soc_card *card = dapm->card;
         struct tegra_alc5623 *machine = snd_soc_card_get_drvdata(card);
         struct tegra_alc5623_platform_data *pdata = machine->pdata;
-	struct snd_soc_codec *codec = dapm->codec;
+        struct snd_soc_codec *codec = dapm->codec;
 
+/*
         if (machine->dmic_reg) {
                 if (SND_SOC_DAPM_EVENT_ON(event))
                         regulator_enable(machine->dmic_reg);
                 else
                         regulator_disable(machine->dmic_reg);
         }
-
+*/
         if (!(machine->gpio_requested & GPIO_INT_MIC_EN))
                 return 0;
 
- 	// Enables the mic differntial control
+        // Enables the mic differntial control
+/*
         snd_soc_update_bits(codec, ALC5623_MIC_ROUTING_CTRL,
                         (1 << 12),
                         (!!SND_SOC_DAPM_EVENT_ON(event))*(1<<12));
+*/
 	// Mic Bias
 	snd_soc_update_bits(codec, ALC5623_PWR_MANAG_ADD1,
 			(1 << 11),
@@ -1099,7 +1102,7 @@ static __devinit int tegra_alc5623_driver_probe(struct platform_device *pdev)
 
 	machine->swap_channels = false;
 #ifdef CONFIG_SWITCH
-	/* Addd h2w swith class support */
+	/* Add h2w swith class support */
 	ret = switch_dev_register(&tegra_alc5623_headset_switch);
 	if (ret < 0)
 		goto err_fini_utils;
@@ -1156,9 +1159,10 @@ static int __devexit tegra_alc5623_driver_remove(struct platform_device *pdev)
 
 	if (machine->spk_reg)
 		regulator_put(machine->spk_reg);
+/*
 	if (machine->dmic_reg)
 		regulator_put(machine->dmic_reg);
-
+*/
 	snd_soc_unregister_card(card);
 
 	tegra_asoc_utils_fini(&machine->util_data);

@@ -172,8 +172,8 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 	{ "i2s2",    "pll_a_out0",   12288000,  true},    /* i2s.1 */
 	{ "pll_a",		"pll_p_out1",	 73728000,	true},		/* always on - audio clocks */
 	{ "pll_a_out0", 	"pll_a",	 18432000,	true},		/* always on - i2s audio */
-	{ "audio",		"pll_a_out0",	 12288000,	true},
-	{ "audio_2x",		"audio",	 24576000,	true},
+	{ "audio",		"pll_a_out0",	 0,	true},
+	{ "audio_2x",		"audio",	 0,	true},
 	{ "spdif_in",		"pll_p",	 36000000,	true},
 	{ "spdif_out",		"pll_a_out0",	  6144000,	true},
 #else
@@ -181,8 +181,8 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 	{ "i2s2",    "pll_a_out0",   11289600,  true},    /* i2s.1 */
 	{ "pll_a",		"pll_p_out1",	 56448000,	true},		/* always on - audio clocks */
 	{ "pll_a_out0", 	"pll_a",	 11289600,	true},		/* always on - i2s audio */
-	{ "audio",		"pll_a_out0",	 11289600,	true},
-	{ "audio_2x",		"audio",	 22579200,	true},
+	{ "audio",		"pll_a_out0",	 0,	true},
+	{ "audio_2x",		"audio",	 0,	true},
 	{ "spdif_in",		"pll_p",	 36000000,	true},
 	{ "spdif_out",		"pll_a_out0",	  5644800,	true},
 #endif

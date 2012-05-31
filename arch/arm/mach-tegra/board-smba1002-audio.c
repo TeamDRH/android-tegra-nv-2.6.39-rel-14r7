@@ -91,7 +91,7 @@ static struct tegra_audio_platform_data tegra_audio_pdata[] = {
 		.i2s_clk_rate 	= 11289600,
 #endif
 		.dap_clk	  	= "cdev1",
-		.audio_sync_clk = "audio",
+		.audio_sync_clk = "audio_2x",
 		.mode			= I2S_BIT_FORMAT_I2S,
 		.fifo_fmt		= I2S_FIFO_PACKED,
 		.bit_size		= I2S_BIT_SIZE_16,
@@ -125,7 +125,6 @@ static struct alc5623_platform_data smba_alc5623_pdata = {
 	.avdd_mv		= 3300,	/* Analog vdd in millivolts */
 
 	.mic1bias_mv		= 2475,	/* MIC1 bias voltage */
-	.mic2bias_mv		= 2475,	/* MIC2 bias voltage */
 	.mic1boost_db    	= 20,  /* MIC1 gain boost */
 	.mic2boost_db   	= 20,  /* MIC2 gain boost */
 

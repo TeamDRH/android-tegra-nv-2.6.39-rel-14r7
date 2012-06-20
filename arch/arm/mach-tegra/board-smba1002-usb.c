@@ -332,3 +332,4 @@ int __init smba_usb_register_devices(void)
 	return 0;
 #endif	
 }
+

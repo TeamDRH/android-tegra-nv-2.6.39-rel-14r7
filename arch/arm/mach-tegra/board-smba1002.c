@@ -678,7 +678,8 @@ static void __init tegra_smba_init(void)
 	/* Register the power subsystem - Including the poweroff handler - Required by all the others */
 	smba_power_register_devices();
 	
-
+	/* Register the USB device */
+	smba_usb_register_devices();
 
 	/* Register UART devices */
 	smba_uart_register_devices();
@@ -693,7 +694,7 @@ static void __init tegra_smba_init(void)
 	smba_audio_register_devices();
 
 	/* Register Jack devices */
-//	smba_jack_register_devices();
+	//smba_jack_register_devices();
 
 	/* Register AES encryption devices */
 	smba_aes_register_devices();
@@ -723,8 +724,6 @@ static void __init tegra_smba_init(void)
 	/* Register SDHCI devices */
 	smba_sdhci_register_devices();	
 	
-	/* Register the USB device */
-	smba_usb_register_devices();
 #ifdef SMBA1002_GPS
 	/* Register gps powermanagement devices */
 	smba_gps_pm_register_devices();

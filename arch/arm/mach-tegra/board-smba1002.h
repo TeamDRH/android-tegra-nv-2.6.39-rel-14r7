@@ -122,8 +122,8 @@
 #define CLR_USBD_RST 22
 #define CLK_RST_CONTROLLER_RST_DEV_L_SET_0 0x300
 #define CLK_RST_CONTROLLER_RST_DEV_L_CLR_0 0x304
-#define SMBA1002_USB0_VBUS		TEGRA_GPIO_PB0		/* 1= VBUS usb0 */
-//#define SMBA1002_USB1_RESET		TEGRA_GPIO_PV1	/* 0= reset */
+#define SMBA1002_USB0_VBUS		TEGRA_GPIO_PB1	/* 1= VBUS usb0 */
+//#define SMBA9701_USB1_RESET		TEGRA_GPIO_PV1	/* 0= reset */
 
 #define SMBA1002_HP_DETECT	TEGRA_GPIO_PW2 	/* HeadPhone detect for audio codec: 1=Hedphone plugged */
 

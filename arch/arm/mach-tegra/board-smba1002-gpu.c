@@ -1,7 +1,7 @@
 /*
  * arch/arm/mach-tegra/board-smba1002-gpu.c
  *
- * Copyright (C) 2011 Eduardo José Tagle <ejtagle@tutopia.com>
+ * Copyright (C) 2011 Eduardo Josï¿½ Tagle <ejtagle@tutopia.com>
  * Copyright (C) 2011 Jens Andersen <jens.andersen@gmail.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -171,6 +171,22 @@ static int smba_hdmi_disable(void)
 
 static struct tegra_dc_mode smba_panel_modes[] = {
 	{
+// Olipad100 (T2 also?) LCD Panel isn't compatible with 68419300. This high clock
+// generates garbage on half right screen using luminosity, and as it is a form of overclock
+// better a lower value but compatible: generated also porch and sych.
+#ifdef SMBA1002_OLIPAD100_LCDPANEL
+		.pclk = 58570000,
+		.h_ref_to_sync = 4,
+		.v_ref_to_sync = 2,
+		.h_sync_width = 158,
+		.v_sync_width =4,
+		.h_back_porch = 160,
+		.v_back_porch = 29,
+		.h_active = 1024,
+		.v_active = 600,
+		.h_front_porch = 24,
+		.v_front_porch = 3,
+#else
 		.pclk = 68419300,    //42430000,
 		.h_ref_to_sync = 4,
 		.v_ref_to_sync = 2,
@@ -182,6 +198,7 @@ static struct tegra_dc_mode smba_panel_modes[] = {
 		.v_active = 600,
 		.h_front_porch = 34,
 		.v_front_porch = 4,
+#endif
 	},
 };
 

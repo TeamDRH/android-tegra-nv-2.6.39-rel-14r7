@@ -82,7 +82,7 @@
 #define SMBA1002_INT_MIC_EN    TEGRA_GPIO_PX0 /* 0 = disabled */
 
 // LCD lower clock, seems to be more compatible with other smba based tablet like Olipad100 // eliminate half LCD garbages
-#define SMBA1002_OLIPAD100_LCDPANEL 1
+//#define SMBA1002_OLIPAD100_LCDPANEL 1
 
 // TPS6586x GPIOs as registered 
 #define PMU_GPIO_BASE		(TEGRA_NR_GPIOS) 

@@ -727,8 +727,8 @@ static void __init tegra_smba_init(void)
 #ifdef SMBA1002_GPS
 	/* Register gps powermanagement devices */
 	smba_gps_pm_register_devices();
-	smba_gps_mag_init();
-	smba_gps_mag_poweron();
+	//smba_gps_mag_init();
+	//smba_gps_mag_poweron();
 #endif	
 	tegra_release_bootloader_fb();
 #ifdef CONFIG_TEGRA_WDT_RECOVERY

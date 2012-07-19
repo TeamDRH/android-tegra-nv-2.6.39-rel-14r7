@@ -74,7 +74,7 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 	{ "pcie_xclk",		"clk_m",		0,	false},		/* pcie controller */
 	{ "afi",		"clk_m",		0,	false},		/* pcie controller */
 	{ "pex",		"clk_m",		0,	false},		/* pcie controller */
-	{ "csus",		"clk_m",	 12000000,	true},		/* tegra_camera */
+	{ "csus",		"clk_m",	        0,	false},		/* tegra_camera */
 	{ "isp",		"clk_m",		0,	false},		/* tegra_camera? */
 	{ "usb3", 		"clk_m", 		0,	false},		/* tegra_ehci.2 */
 	{ "usb2",		"clk_m",		0,	false},		/* tegra_ehci.1 */
@@ -156,8 +156,8 @@ static __initdata struct tegra_clk_init_table smba_clk_init_table[] = {
 	{ "pll_m",		NULL,			0,	false},		/* always on - memory clocks */	
 	{ "mpe",		"pll_m",		0,	false},		/* tegra_grhost */
 	{ "epp",		"pll_m",		0,	false}, 	/* tegra_grhost */	
-	{ "vi_sensor",		"pll_m",	 19880597,	true},		/* tegra_camera */
-	{ "vi",			"pll_m",	 21142857,	true},		/* tegra_camera */
+	{ "vi_sensor",		"pll_m",	 20000000,	false},		/* tegra_camera */
+	{ "vi",			"pll_m",	 21000000,	false},		/* tegra_camera */
 	{ "emc",		"pll_m",		0,	true},		/* always on */
 	{ "pll_m_out1",		"pll_m",		0,	true},		/* always on - unused ?*/
 

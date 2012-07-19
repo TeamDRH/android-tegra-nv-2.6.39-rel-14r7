@@ -1357,7 +1357,10 @@ static long sensor_ioctl(struct file *file,
 
 static int sensor_open(struct inode *inode, struct file *file)
 {
-	u16 buf[64];
+	u16 dataBuf[16];
+	// print 16 shorts of data per line
+	char lineBuf[80];
+	int i, j, addr;
 
 	pr_info("s5k6aa %s\n",__func__);
 
@@ -1368,14 +1371,15 @@ static int sensor_open(struct inode *inode, struct file *file)
 
 	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
 
-	buf[0] = 0;
-	buf[1] = 0;
-	buf[2] = 0;
-	sensor_read_reg(info->i2c_client, S5K6AA_R_FWdate, &buf[0]);
-	sensor_read_reg(info->i2c_client, S5K6AA_R_FWapiVer, &buf[1]);
-	sensor_read_reg(info->i2c_client, S5K6AA_R_FWrevision, &buf[2]);
-
-	pr_info("s5k6aa FW Date: %04x API: %04x FW Revision: %04x\n", buf[0], buf[1], buf[2]);
+	addr = 0;
+	for(j=0;j<0x20;j++) {
+	  for(i=0;i<ARRAY_SIZE(dataBuf);i++) {
+	    sensor_read_reg(info->i2c_client, addr, dataBuf+i);
+	    addr += 2;
+	  }
+	  hex_dump_to_buffer(dataBuf, 32, 32, 2, lineBuf, 80, true);
+	  pr_info("%03x: %s\n", addr, lineBuf);
+	}
 
 	return 0;
 }

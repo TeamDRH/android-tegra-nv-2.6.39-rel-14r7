@@ -1357,11 +1357,24 @@ static long sensor_ioctl(struct file *file,
 
 static int sensor_open(struct inode *inode, struct file *file)
 {
+	u16 buf[64];
+
 	pr_info("s5k6aa %s\n",__func__);
+
 	file->private_data = info;
 	if (info->pdata && info->pdata->power_on)
 		info->pdata->power_on();
 	info->mode = -1;
+
+	buf[0] = 0;
+	buf[1] = 0;
+	buf[2] = 0;
+	sensor_read_reg(info->i2c_client, S5K6AA_R_FWdate, &buf[0]);
+	sensor_read_reg(info->i2c_client, S5K6AA_R_FWapiVer, &buf[1]);
+	sensor_read_reg(info->i2c_client, S5K6AA_R_FWrevision, &buf[2]);
+
+	pr_info("s5k6aa FW Date: %04x API: %04x FW Revision: %04x\n", buf[0], buf[1], buf[2]);
+
 	return 0;
 }
 
@@ -1415,6 +1428,7 @@ static int sensor_probe(struct i2c_client *client,
 	info->i2c_client = client;
 
 	i2c_set_clientdata(client, info);
+
 	return 0;
 }
 

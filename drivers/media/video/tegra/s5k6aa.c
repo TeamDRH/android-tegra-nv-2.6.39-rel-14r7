@@ -1088,7 +1088,7 @@ static int sensor_read_reg(struct i2c_client *client, u16 addr, u16 *val)
 	msg[1].addr = client->addr;
 	msg[1].flags = I2C_M_RD;
 	msg[1].len = 2;
-	msg[1].buf = data + 2;
+	msg[1].buf = (unsigned char *)val;
 
 	err = i2c_transfer(client->adapter, msg, 2);
 
@@ -1096,7 +1096,7 @@ static int sensor_read_reg(struct i2c_client *client, u16 addr, u16 *val)
 		return -EINVAL;
 
 	/* swap high and low byte to match table format */
-	swap(*(data+2),*(data+3));
+	//swap(*(data+2),*(data+3));
 
 	return 0;
 }

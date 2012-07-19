@@ -18,6 +18,8 @@
  * 02111-1307, USA
  */
 
+#define DEBUG 1
+
 #include <linux/i2c.h>
 #include <linux/delay.h>
 #include <linux/gpio.h>
@@ -41,12 +43,54 @@
 //#define TPS6586X_GPIO_BASE (TEGRA_NR_GPIOS)
 //#define AVDD_DSI_CSI_ENB_GPIO (TPS6586X_GPIO_BASE + 1) //gpio2
 
+static const char* camera_clocks[] = {
+  //  "vi",
+  "vi_sensor", // should have no reset...
+  "csus",
+  //"isp",
+  //"csi",
+};
+
+static int init_camera_clocks(void)
+{
+	int i, ret;
+	struct clk* c;
+
+	for (i=0;i<ARRAY_SIZE(camera_clocks);i++) {
+	  c = tegra_get_clock_by_name(camera_clocks[i]);
+	  if (IS_ERR_OR_NULL(c)) {
+	    pr_err("Unable to get %s clock for camera\n", camera_clocks[i]);
+	    ret = PTR_ERR(c);
+	    return ret;
+	  }
+	  ret = clk_enable(c);
+	  if (ret != 0) {
+	    pr_err("Unable to enable %s clock for camera\n", camera_clocks[i]);
+	    return ret;
+	  } else {
+	    pr_debug("Enabled %s clock\n", camera_clocks[i]);
+	  }
+	  // calls c->ops->reset(), which calls tegra2_periph_clk_reset
+	  tegra_periph_reset_assert(c);
+	  udelay(10);
+	  tegra_periph_reset_deassert(c);
+	  udelay(10);
+	}
+
+	return 0;
+}
+
 static int smba_s5k6aa_power_on(void)
 {
 	pr_info("s5k6aa power on\n");
 
 	gpio_direction_output(S5K6AA_POWER_PIN, 1);
 	mdelay(10);
+	// camera MCLK (vi_sensor clk)
+	tegra_pinmux_set_tristate(TEGRA_PINGROUP_CSUS, TEGRA_TRI_NORMAL);
+	// camera PCLK (vi clk, pixel clk for data)
+	//tegra_pinmux_set_tristate(TEGRA_PINGROUP_DTD, TEGRA_TRI_NORMAL);
+
 	gpio_direction_output(S5K6AA_RESET_PIN, 1);
 	mdelay(5);
 	gpio_direction_output(S5K6AA_RESET_PIN, 0);
@@ -145,6 +189,8 @@ int __init smba_camera_init(void)
 	pr_info("smba camera init!\n");
 
 	init_camera_gpio();
+
+	init_camera_clocks();
 
 //	cam_ldo6 = regulator_get(NULL, "vdd_ldo6");
 //	if (IS_ERR_OR_NULL(cam_ldo6)) {

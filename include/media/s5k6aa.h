@@ -3,6 +3,10 @@
 
 #include <linux/ioctl.h>  /* For IOCTL macros */
 
+#define S5K6AA_SetPage 0xFCFC
+#define S5K6AA_P_APB 0xD000 /* Hardware registers */
+#define S5K6AA_P_ROM 0x7000 /* Host-SW registers */
+
 #define S5K6AA_R_FWdate 0x0134
 #define S5K6AA_R_FWapiVer 0x0136
 #define S5K6AA_R_FWrevision 0x0138

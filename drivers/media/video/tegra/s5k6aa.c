@@ -1366,6 +1366,8 @@ static int sensor_open(struct inode *inode, struct file *file)
 		info->pdata->power_on();
 	info->mode = -1;
 
+	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
+
 	buf[0] = 0;
 	buf[1] = 0;
 	buf[2] = 0;

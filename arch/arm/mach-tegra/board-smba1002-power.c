@@ -111,7 +111,7 @@ static struct regulator_consumer_supply tps658621_ldo2_supply[] = {
    USB voltage rail : AVDD_USB -> derived from LDO3 (VDD_3V3)
    NAND voltage rail : VDDIO_NAND_3V3 -> derived from LDO3 (VDD_3V3) (AON domain)
    SDIO voltage rail : VDDIO_SDIO -> derived from LDO3 (VDD_3V3) 
-   VI voltage rail : VDDIO_VI -> derived from LDO3 (VDD_3V3)
+   VI voltage rail : VDDIO_VI -> derived from LDO9 (AVDD_2V85)
    LVDS LCD Display : VDD_LVDS (VDD_3V3)
    TMON pwer rail : TMON pwer rail -> LDO3 (VDD_3V3)
 */

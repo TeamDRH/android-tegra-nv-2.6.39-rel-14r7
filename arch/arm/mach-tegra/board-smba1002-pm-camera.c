@@ -23,6 +23,7 @@
 #include <linux/gpio.h>
 #include <linux/regulator/consumer.h>
 #include <linux/platform_device.h>
+#include <linux/clk.h>
 #include <linux/err.h>
 #include <generated/mach-types.h>
 #include <mach/gpio.h>
@@ -30,9 +31,10 @@
 #include "gpio-names.h"
 #include "board.h"
 #include "board-smba1002.h"
+#include "clock.h"
 
-static struct regulator *cam_ldo6 = NULL;
-static struct regulator *cam_ldo9 = NULL;
+//static struct regulator *cam_ldo6 = NULL;
+//static struct regulator *cam_ldo9 = NULL;
 
 #define S5K6AA_POWER_PIN TEGRA_GPIO_PBB5
 #define S5K6AA_RESET_PIN TEGRA_GPIO_PD2
@@ -41,6 +43,8 @@ static struct regulator *cam_ldo9 = NULL;
 
 static int smba_s5k6aa_power_on(void)
 {
+	pr_info("s5k6aa power on\n");
+
 	gpio_direction_output(S5K6AA_POWER_PIN, 1);
 	mdelay(10);
 	gpio_direction_output(S5K6AA_RESET_PIN, 1);
@@ -54,6 +58,8 @@ static int smba_s5k6aa_power_on(void)
 
 static int smba_s5k6aa_power_off(void)
 {
+	pr_info("s5k6aa power off\n");
+
 	gpio_direction_output(S5K6AA_POWER_PIN, 0);
 	gpio_direction_output(S5K6AA_RESET_PIN, 1);
 	mdelay(10);
@@ -62,6 +68,8 @@ static int smba_s5k6aa_power_off(void)
 
 static int smba_s5k6aa_reset(void)
 {
+	pr_info("s5k6aa reset\n");
+
 	gpio_direction_output(S5K6AA_POWER_PIN, 0);
 	mdelay(5);
 	gpio_direction_output(S5K6AA_POWER_PIN, 1);
@@ -83,7 +91,7 @@ struct s5k6aa_platform_data smba_s5k6aa_data = {
 
 static struct i2c_board_info smba_i2c3_board_info_camera[] = {
 	{
-		I2C_BOARD_INFO("s5k6aa",  0x3e),
+		I2C_BOARD_INFO("s5k6aa",  0x3c),
 		.platform_data = &smba_s5k6aa_data,
 	},
 };

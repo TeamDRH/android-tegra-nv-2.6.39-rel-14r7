@@ -177,7 +177,7 @@
 #define REG_0TC_CCFG_uCaptureMode		0x030C
 #define REG_0TC_CCFG_usWidth			0x030E
 #define REG_0TC_CCFG_usHeight			0x0310
-#define REG_0TC_CCFG_Format			0x3012
+#define REG_0TC_CCFG_Format			0x0312
 #define REG_0TC_CCFG_usMaxOut4KHzRate		0x0314
 #define REG_0TC_CCFG_usMinOut4KHzRate		0x0316
 #define REG_0TC_CCFG_PVIMask			0x0318

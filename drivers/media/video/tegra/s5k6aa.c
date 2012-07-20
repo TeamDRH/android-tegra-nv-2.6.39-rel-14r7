@@ -1088,15 +1088,15 @@ static int sensor_read_reg(struct i2c_client *client, u16 addr, u16 *val)
 	msg[1].addr = client->addr;
 	msg[1].flags = I2C_M_RD;
 	msg[1].len = 2;
-	msg[1].buf = (unsigned char *)val;
+	msg[1].buf = (data+2);
 
 	err = i2c_transfer(client->adapter, msg, 2);
 
 	if (err != 2)
 		return -EINVAL;
 
-	/* swap high and low byte to match table format */
-	//swap(*(data+2),*(data+3));
+	/* high byte comes back first */
+	*val = data[2] << 8 | data[3];
 
 	return 0;
 }
@@ -1357,9 +1357,7 @@ static long sensor_ioctl(struct file *file,
 
 static int sensor_open(struct inode *inode, struct file *file)
 {
-	u8 dataBuf[0x1000];
-	// print 16 shorts of data per line
-	char lineBuf[80];
+	u16 dataBuf[0x800];
 	int i;
 
 	pr_info("s5k6aa %s\n",__func__);
@@ -1372,7 +1370,7 @@ static int sensor_open(struct inode *inode, struct file *file)
 	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
 
 	for(i=0;i<ARRAY_SIZE(dataBuf)/2;i++) {
-	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i*2);
+	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i);
 	}
 	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 16, 2, 
 		       dataBuf, 0x1000, true);

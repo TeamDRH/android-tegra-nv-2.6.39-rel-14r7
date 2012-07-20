@@ -1357,7 +1357,7 @@ static long sensor_ioctl(struct file *file,
 
 static int sensor_open(struct inode *inode, struct file *file)
 {
-	u8 dataBuf[0x200];
+	u8 dataBuf[0x1000];
 	// print 16 shorts of data per line
 	char lineBuf[80];
 	int i;
@@ -1372,9 +1372,10 @@ static int sensor_open(struct inode *inode, struct file *file)
 	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
 
 	for(i=0;i<ARRAY_SIZE(dataBuf)/2;i++) {
-	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i);
+	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i*2);
 	}
-	print_hex_dump_bytes("", DUMP_PREFIX_OFFSET, dataBuf, 0x200);
+	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 16, 2, 
+		       dataBuf, 0x1000, true);
 
 	return 0;
 }

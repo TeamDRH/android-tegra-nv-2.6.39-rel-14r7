@@ -1355,10 +1355,27 @@ static long sensor_ioctl(struct file *file,
 	return 0;
 }
 
-static int sensor_open(struct inode *inode, struct file *file)
+static void sensor_dump(void)
 {
 	u16 dataBuf[0x800];
 	int i;
+
+	pr_info("s5k6aa %s\n",__func__);
+
+	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
+
+	for(i=0;i<ARRAY_SIZE(dataBuf)/2;i++) {
+	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i);
+	}
+	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 16, 2, 
+		       dataBuf, 0x1000, true);
+
+}
+
+static int sensor_open(struct inode *inode, struct file *file)
+{
+	u16 dataBuf[12];
+	int i, ret;
 
 	pr_info("s5k6aa %s\n",__func__);
 
@@ -1370,10 +1387,12 @@ static int sensor_open(struct inode *inode, struct file *file)
 	sensor_write_reg(info->i2c_client, S5K6AA_SetPage, S5K6AA_P_ROM);
 
 	for(i=0;i<ARRAY_SIZE(dataBuf)/2;i++) {
-	  sensor_read_reg(info->i2c_client, i*2, dataBuf+i);
+	  ret = sensor_read_reg(info->i2c_client, REG_FWcompDate+i*2, dataBuf+i);
+	  if (ret)
+	    return ret;
 	}
-	print_hex_dump(KERN_DEBUG, "", DUMP_PREFIX_OFFSET, 16, 2, 
-		       dataBuf, 0x1000, true);
+
+	pr_info("s5k6aa firmware date %s\n", (char *)dataBuf);
 
 	return 0;
 }

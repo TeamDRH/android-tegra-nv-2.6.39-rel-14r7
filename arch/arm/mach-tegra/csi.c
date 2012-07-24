@@ -28,7 +28,7 @@
 static struct clk *vi_clk;
 static struct clk *csi_clk;
 
-int tegra_vi_csi_writel(u32 val, u32 offset)
+int tegra_vi_csi_enable_clocks(void)
 {
 	if (vi_clk == NULL) {
 		vi_clk = tegra_get_clock_by_name("vi");
@@ -48,37 +48,38 @@ int tegra_vi_csi_writel(u32 val, u32 offset)
 	}
 	clk_enable(csi_clk);
 
-	writel(val, IO_TO_VIRT(TEGRA_VI_BASE) + offset * 4);
+	return 0;
+}
 
+void tegra_vi_csi_disable_clocks(void)
+{
 	clk_disable(csi_clk);
 	clk_disable(vi_clk);
+}
+
+int tegra_vi_csi_writel(u32 val, u32 offset)
+{
+	int ret;
+
+	ret = tegra_vi_csi_enable_clocks();
+	if(ret)
+	  return ret;
+	writel(val, IO_TO_VIRT(TEGRA_VI_BASE) + offset * 4);
+	tegra_vi_csi_disable_clocks();
 	return 0;
 }
 
 int tegra_vi_csi_readl(u32 offset, u32 *val)
 {
-	if (vi_clk == NULL) {
-		vi_clk = tegra_get_clock_by_name("vi");
-		if (IS_ERR_OR_NULL(vi_clk)) {
-			pr_err("vi: can't get vi clock\n");
-			return -EINVAL;
-		}
-	}
-	clk_enable(vi_clk);
+	int ret;
 
-	if (csi_clk == NULL) {
-		csi_clk = tegra_get_clock_by_name("csi");
-		if (IS_ERR_OR_NULL(csi_clk)) {
-			pr_err("csi: can't get csi clock\n");
-			return -EINVAL;
-		}
-	}
-	clk_enable(csi_clk);
+	ret = tegra_vi_csi_enable_clocks();
+	if(ret)
+	  return ret;
 
 	*val = readl(IO_TO_VIRT(TEGRA_VI_BASE) + offset * 4);
 
-	clk_disable(csi_clk);
-	clk_disable(vi_clk);
+	tegra_vi_csi_disable_clocks();
 
 	return 0;
 }

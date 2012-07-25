@@ -20,9 +20,10 @@
 #include <media/videobuf-dma-nvmap.h>
 #include <media/tegra_v4l2_camera.h>
 
-#include <mach/nvhost.h>
+#include <linux/nvhost.h>
 
 #include "../../video/tegra/host/dev.h"
+#include "../../video/tegra/host/t20/syncpt_t20.h"
 
 #define TEGRA_CAM_DRV_NAME "tegra-camera"
 #define TEGRA_CAM_VERSION_CODE KERNEL_VERSION(0, 0, 5)
@@ -396,7 +397,8 @@ static int tegra_camera_capture_start(struct tegra_camera_dev *pcdev,
 	err = nvhost_syncpt_wait_timeout(&pcdev->ndev->host->syncpt,
 					 TEGRA_VI_SYNCPT_CSI,
 					 pcdev->syncpt_csi,
-					 TEGRA_SYNCPT_CSI_WAIT_TIMEOUT);
+					 TEGRA_SYNCPT_CSI_WAIT_TIMEOUT,
+					 NULL);
 
 	return err;
 }
@@ -410,7 +412,8 @@ static int tegra_camera_capture_stop(struct tegra_camera_dev *pcdev)
 	err = nvhost_syncpt_wait_timeout(&pcdev->ndev->host->syncpt,
 					 TEGRA_VI_SYNCPT_VI,
 					 pcdev->syncpt_vi,
-					 TEGRA_SYNCPT_VI_WAIT_TIMEOUT);
+					 TEGRA_SYNCPT_VI_WAIT_TIMEOUT,
+					 NULL);
 
 	return err;
 }

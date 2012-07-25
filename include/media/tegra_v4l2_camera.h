@@ -15,7 +15,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/i2c.h>
 
-#include <mach/nvhost.h>
+#include <linux/nvhost.h>
 
 struct tegra_camera_platform_data {
 	int	(*enable_camera)(struct nvhost_device *ndev);

@@ -20,7 +20,7 @@
 /*** Input interfaces ***/
 #define CSI_VI_INPUT_STREAM_CONTROL_0 0x200
 /* Always set to zero on Tegra2? */
-#define VIP_SF_GEN(x) (((x) & 0x1) << 7)
+#define VIP_SF_GEN (1 << 7)
 
 #define CSI_HOST_INPUT_STREAM_CONTROL_0 0x202
 
@@ -31,7 +31,7 @@
 /*** PP A registers ***/
 #define CSI_PIXEL_STREAM_A_CONTROL0_0 0x206
 #define CSI_PPA_PAD_FRAME(x) (((x) & 0x3) << 28)
-#define CSI_PPA_HEADER_EC_ENABLE(x) (((x) & 0x1) << 27)
+#define CSI_PPA_HEADER_EC_ENABLE (1 << 27)
 #define CSI_PPA_PAD_SHORT_LINE(x) (((x) & 0x3) << 24)
 #define CSI_PPA_EMBEDDED_DATA_OPTIONS(x) (((x) & 0x3) << 20)
 #define CSI_PPA_OUTPUT_FORMAT_OPTIONS(x) (((x) & 0xf) << 16)
@@ -59,10 +59,10 @@
 #define DATA_TYPE_RAW10 43
 #define DATA_TYPE_RAW12 44
 #define DATA_TYPE_RAW14 45
-#define CSI_PPA_CRC_CHECK(x) (((x) & 0x1) << 7)
-#define CSI_PPA_WORD_COUNT_SELECT(x) (((x) & 0x1) << 6)
-#define CSI_PPA_DATA_IDENTIFIER(x) (((x) & 0x1) << 5)
-#define CSI_PPA_PACKET_HEADER(x) (((x) & 0x1) << 4)
+#define CSI_PPA_CRC_CHECK (1 << 7)
+#define CSI_PPA_WORD_COUNT_SELECT (1 << 6)
+#define CSI_PPA_DATA_IDENTIFIER (1 << 5)
+#define CSI_PPA_PACKET_HEADER (1 << 4)
 #define CSI_PPA_STREAM_SOURCE(x) (((x) & 0x7) << 0)
 #define STREAM_SOURCE_CSI_A 0
 #define STREAM_SOURCE_CSI_B 1
@@ -78,8 +78,8 @@
 #define CSI_PIXEL_STREAM_PPA_COMMAND_0 0x20a
 #define CSI_PPA_START_MARKER_FRAME_MAX(x) (((x) & 0xf) << 12)
 #define CSI_PPA_START_MARKER_FRAME_MIN(x) (((x) & 0xf) << 8)
-#define CSI_PPA_VSYNC_START_MARKER(x) (((x) & 0x1) << 4)
-#define CSI_PPA_SINGLE_SHOT(x) (((x) & 0x1) << 2)
+#define CSI_PPA_VSYNC_START_MARKER (1 << 4)
+#define CSI_PPA_SINGLE_SHOT (1 << 2)
 #define CSI_PPA_ENABLE(x) (((x) & 0x3) << 0)
 #define CSI_ENABLE 1
 #define CSI_DISABLE 2
@@ -106,6 +106,32 @@
 #define CSI_PHY_CILB_CONTROL0_0 0x21c
 
 #define CSI_CSI_PIXEL_PARSER_STATUS_0 0x21e
+#define HPH_UNC_HDR_ERR (1 << 31)
+#define HPV_UNC_HDR_ERR (1 << 30)
+#define PPB_SPARE_STATUS_1 (1 << 26)
+#define PPB_INTERFRAME_LINE (1 << 25)
+#define PPB_EXTRA_SF (1 << 24)
+#define PPB_SHORT_FRAME (1 << 23)
+#define PPB_STMERR (1 << 22)
+#define PPB_FIFO_OVRF (1 << 21)
+#define PPB_PL_CRC_ERR (1 << 20)
+#define PPB_SL_PKT_DROPPED (1 << 19)
+#define PPB_SL_PROCESSED (1 << 18)
+#define PPB_ILL_WD_CNT (1 << 17)
+#define PPB_HDR_ERR_COR (1 << 16)
+#define HPB_UNC_HDR_ERR (1 << 15)
+#define HPA_UNC_HDR_ERR (1 << 14)
+#define PPA_SPARE_STATUS_1 (1 << 10)
+#define PPA_INTERFRAME_LINE (1 << 9)
+#define PPA_EXTRA_SF (1 << 8)
+#define PPA_SHORT_FRAME (1 << 7)
+#define PPA_STMERR (1 << 6)
+#define PPA_FIFO_OVRF (1 << 5)
+#define PPA_PL_CRC_ERR (1 << 4)
+#define PPA_SL_PKT_DROPPED (1 << 3)
+#define PPA_SL_PROCESSED (1 << 2)
+#define PPA_ILL_WD_CNT (1 << 1)
+#define PPA_HDR_ERR_COR (1 << 0)
 
 #define CSI_CSI_CIL_STATUS_0 0x21f
 
@@ -113,7 +139,9 @@
 
 #define CSI_CSI_CIL_INTERRUPT_MASK_0 0x221
 
-#define CSI_CSI_READONLY_STATUS_0 0x220
+#define CSI_CSI_READONLY_STATUS_0 0x222
+#define CSI_PPB_ACTIVE (1 << 1)
+#define CSI_PPA_ACTIVE (1 << 0)
 
 #define CSI_ESCAPE_MODE_COMMAND_0 0x223
 

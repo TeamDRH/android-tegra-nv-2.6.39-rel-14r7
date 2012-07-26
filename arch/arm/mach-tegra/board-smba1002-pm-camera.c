@@ -135,10 +135,24 @@ static int smba_s5k6aa_reset(void)
 	return 0;
 }
 
+enum s5k6aa_gpio_id {
+	STBY,
+	RST,
+	GPIO_NUM,
+};
+
 struct s5k6aa_platform_data smba_s5k6aa_data = {
 	.set_power = smba_s5k6aa_set_power,
 	.mclk_frequency = S5K6AA_MCLK_FREQ,
 	.bus_type = V4L2_MBUS_PARALLEL,
+	.gpio_stby = { 
+		.gpio = S5K6AA_POWER_PIN, 
+		.level = 0, // active-low
+	},
+	.gpio_reset = { 
+		.gpio = S5K6AA_RESET_PIN,
+		.level = 0, // active-low
+	},
 	.nlanes = 1,
 	.horiz_flip = false,
 	.vert_flip = false,

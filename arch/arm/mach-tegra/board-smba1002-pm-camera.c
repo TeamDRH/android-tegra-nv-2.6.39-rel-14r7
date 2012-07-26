@@ -146,7 +146,7 @@ struct s5k6aa_platform_data smba_s5k6aa_data = {
 
 static struct i2c_board_info smba_i2c3_board_info_camera[] = {
 	{
-		I2C_BOARD_INFO("s5k6aa",  0x3c),
+		I2C_BOARD_INFO("S5K6AA",  0x3c),
 		.platform_data = &smba_s5k6aa_data,
 	},
 };

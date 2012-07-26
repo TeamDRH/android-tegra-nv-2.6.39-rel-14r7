@@ -23,4 +23,3 @@ obj-$(CONFIG_VIDEO_OV2655_MIPI)	+= ov2655_mipi.o
 obj-$(CONFIG_VIDEO_MT9P111)	+= mt9p111.o
 obj-$(CONFIG_VIDEO_MT9D113)	+= mt9d113.o
 obj-$(CONFIG_TORCH_AAT3174)	+= aat3174.o
-obj-$(CONFIG_VIDEO_S5K6AA)	+= s5k6aa.o

@@ -133,8 +133,3 @@ config TORCH_AAT3174
         default n
         ---help---
           This is a driver for the AAT3174 flash/torch camera device.
-config VIDEO_S5K6AA
-        tristate "S5K6AA camera sensor support"
-        depends on I2C && ARCH_TEGRA
-        ---help---
-          This is a driver for the SAMSUNG S5K6AA 1.3MP camera sensor

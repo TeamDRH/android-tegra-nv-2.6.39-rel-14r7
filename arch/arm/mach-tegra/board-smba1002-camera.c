@@ -26,6 +26,10 @@
 #include <linux/delay.h>
 #include <linux/reboot.h>
 #include <linux/memblock.h>
+#include <linux/nvhost.h>
+
+#include <media/soc_camera.h>
+#include <media/s5k6aa.h>
 
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
@@ -44,17 +48,71 @@
 #include "gpio-names.h"
 #include "devices.h"
 
-static struct platform_device smba_camera_pm_device = {
-	.name		= "smba-pm-camera",
-	.id			= -1,
+int smba_s5k6aa_set_power(int enable);
+
+#define S5K6AA_POWER_PIN TEGRA_GPIO_PBB5
+#define S5K6AA_RESET_PIN TEGRA_GPIO_PD2
+
+// TODO: clean these up into a common header
+#define S5K6AA_MCLK_FREQ 24000000
+
+struct s5k6aa_platform_data smba_s5k6aa_data = {
+	.set_power = smba_s5k6aa_set_power,
+	.mclk_frequency = S5K6AA_MCLK_FREQ,
+	.bus_type = V4L2_MBUS_PARALLEL,
+	.gpio_stby = { 
+		.gpio = S5K6AA_POWER_PIN, 
+		.level = 0, // active-low
+	},
+	.gpio_reset = { 
+		.gpio = S5K6AA_RESET_PIN,
+		.level = 0, // active-low
+	},
+	.nlanes = 1,
+	.horiz_flip = false,
+	.vert_flip = false,
 };
 
+static struct i2c_board_info smba_i2c3_board_info_camera[] = {
+	{
+		I2C_BOARD_INFO("S5K6AA",  0x3c),
+		.platform_data = &smba_s5k6aa_data,
+	},
+};
 
-static struct platform_device *smba_camera_pm_devices[] __initdata = {
-	&smba_camera_pm_device,
+static struct soc_camera_link clink_s5k6aa = {
+  .board_info     = &smba_i2c3_board_info_camera[0],
+  //.power          = mx27_3ds_camera_power,
+};
+
+static struct platform_device smba_tegra_s5k6aa_device = {
+  .name   = "tegra-camera",
+  .id     = 0,
+  .dev    = {
+    .platform_data = &clink_s5k6aa,
+  },
+};
+
+static struct resource smba_camera_resources[] = {
+	{
+		.name	= "regs",
+		.start	= TEGRA_VI_BASE,
+		.end	= TEGRA_VI_BASE + TEGRA_VI_SIZE - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+};
+
+static struct nvhost_device smba_camera_device = {
+	.name		= "tegra-camera",
+	.id		= 0,
+	.resource	= smba_camera_resources,
+	.num_resources	= ARRAY_SIZE(smba_camera_resources),
+	.dev = {
+		.platform_data = &smba_tegra_s5k6aa_device,
+	},
 };
 
 int __init smba_camera_register_devices(void)
 {
-	return platform_add_devices(smba_camera_pm_devices, ARRAY_SIZE(smba_camera_pm_devices));
+  return nvhost_device_register(&smba_camera_device);
 }

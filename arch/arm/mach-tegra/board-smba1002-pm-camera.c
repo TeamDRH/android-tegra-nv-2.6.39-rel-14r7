@@ -34,6 +34,7 @@
 #include "board.h"
 #include "board-smba1002.h"
 #include "clock.h"
+#include <media/tegra_camera.h>
 
 //static struct regulator *cam_ldo6 = NULL;
 //static struct regulator *cam_ldo9 = NULL;
@@ -43,66 +44,37 @@
 //#define TPS6586X_GPIO_BASE (TEGRA_NR_GPIOS)
 //#define AVDD_DSI_CSI_ENB_GPIO (TPS6586X_GPIO_BASE + 1) //gpio2
 
-static const char* camera_clocks[] = {
-  "vi",
-  "vi_sensor", // should have no reset...
-  "csus",
-  //"isp",
-  "csi",
+#define S5K6AA_MCLK_FREQ 24000000
+#define S5K6AA_PCLK_FREQ 24000000
+
+void *tegra_camera_get_dev(void);
+int tegra_camera_enable(void *d);
+void tegra_camera_disable(void *d);
+int tegra_camera_clk_set_info(void *d, struct tegra_camera_clk_info *info);
+
+static struct tegra_camera_clk_info pclk_info = {
+  .id = TEGRA_CAMERA_MODULE_VI,
+  .clk_id = TEGRA_CAMERA_VI_CLK,
+  .rate = S5K6AA_PCLK_FREQ,
+  .flag = 0, //TEGRA_CAMERA_ENABLE_PD2VI_CLK,
 };
 
-static int disable_camera_clocks(void)
-{
-	int i, ret;
-	struct clk* c;
-
-	for (i=0;i<ARRAY_SIZE(camera_clocks);i++) {
-	  c = tegra_get_clock_by_name(camera_clocks[i]);
-	  if (IS_ERR_OR_NULL(c)) {
-	    pr_err("Unable to get %s clock for camera\n", camera_clocks[i]);
-	    ret = PTR_ERR(c);
-	    return ret;
-	  }
-	  clk_disable(c);
-	}
-
-	return 0;
-}
-
-static int enable_camera_clocks(void)
-{
-	int i, ret;
-	struct clk* c;
-
-	for (i=0;i<ARRAY_SIZE(camera_clocks);i++) {
-	  c = tegra_get_clock_by_name(camera_clocks[i]);
-	  if (IS_ERR_OR_NULL(c)) {
-	    pr_err("Unable to get %s clock for camera\n", camera_clocks[i]);
-	    ret = PTR_ERR(c);
-	    return ret;
-	  }
-	  ret = clk_enable(c);
-	  if (ret != 0) {
-	    pr_err("Unable to enable %s clock for camera\n", camera_clocks[i]);
-	    return ret;
-	  } else {
-	    pr_debug("Enabled %s clock\n", camera_clocks[i]);
-	  }
-	  // calls c->ops->reset(), which calls tegra2_periph_clk_reset
-	  tegra_periph_reset_assert(c);
-	  udelay(10);
-	  tegra_periph_reset_deassert(c);
-	  udelay(10);
-	}
-
-	return 0;
-}
+static struct tegra_camera_clk_info mclk_info = {
+  .id = TEGRA_CAMERA_MODULE_VI,
+  .clk_id = TEGRA_CAMERA_VI_SENSOR_CLK,
+  .rate = S5K6AA_MCLK_FREQ,
+  .flag = 0,
+};
 
 static int smba_s5k6aa_power_on(void)
 {
-	pr_info("s5k6aa power on\n");
+	void *dev = tegra_camera_get_dev();
 
-	enable_camera_clocks();
+	pr_info("s5k6aa power on\n");
+	tegra_camera_enable(dev);
+	tegra_camera_clk_set_info(dev, &mclk_info);
+	tegra_camera_clk_set_info(dev, &pclk_info);
+
 	gpio_direction_output(S5K6AA_POWER_PIN, 1);
 	mdelay(10);
 
@@ -122,6 +94,8 @@ static int smba_s5k6aa_power_on(void)
 
 static int smba_s5k6aa_power_off(void)
 {
+	void *dev = tegra_camera_get_dev();
+
 	pr_info("s5k6aa power off\n");
 
 	gpio_direction_output(S5K6AA_POWER_PIN, 0);
@@ -132,8 +106,16 @@ static int smba_s5k6aa_power_off(void)
 	tegra_pinmux_set_tristate(TEGRA_PINGROUP_CSUS, TEGRA_TRI_TRISTATE);
 	// camera PCLK (vi clk, pixel clk for data)
 	tegra_pinmux_set_tristate(TEGRA_PINGROUP_DTD, TEGRA_TRI_TRISTATE);
-	disable_camera_clocks();
+	tegra_camera_disable(dev);
 	return 0;
+}
+
+static int smba_s5k6aa_set_power(int enable)
+{
+  if(enable)
+    return smba_s5k6aa_power_on();
+  else
+    return smba_s5k6aa_power_off();
 }
 
 static int smba_s5k6aa_reset(void)
@@ -154,9 +136,12 @@ static int smba_s5k6aa_reset(void)
 }
 
 struct s5k6aa_platform_data smba_s5k6aa_data = {
-	.power_on = smba_s5k6aa_power_on,
-	.power_off = smba_s5k6aa_power_off,
-	.reset = smba_s5k6aa_reset,
+	.set_power = smba_s5k6aa_set_power,
+	.mclk_frequency = S5K6AA_MCLK_FREQ,
+	.bus_type = V4L2_MBUS_PARALLEL,
+	.nlanes = 1,
+	.horiz_flip = false,
+	.vert_flip = false,
 };
 
 static struct i2c_board_info smba_i2c3_board_info_camera[] = {

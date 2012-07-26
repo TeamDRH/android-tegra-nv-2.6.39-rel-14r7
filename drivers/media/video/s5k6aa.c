@@ -1557,6 +1557,8 @@ static int s5k6aa_probe(struct i2c_client *client,
 	struct s5k6aa *s5k6aa;
 	int i, ret;
 
+	dev_info(&client->dev, "%s", __func__);
+
 	if (pdata == NULL) {
 		dev_err(&client->dev, "Platform data not specified\n");
 		return -EINVAL;
@@ -1590,12 +1592,16 @@ static int s5k6aa_probe(struct i2c_client *client,
 	s5k6aa->pad.flags = MEDIA_PAD_FL_SOURCE;
 	sd->entity.type = MEDIA_ENT_T_V4L2_SUBDEV_SENSOR;
 	ret = media_entity_init(&sd->entity, 1, &s5k6aa->pad, 0);
-	if (ret)
+	if (ret) {
+		dev_err(&client->dev, "Failed to initialize media entity\n");
 		goto out_err1;
+	}
 
 	ret = s5k6aa_configure_gpios(s5k6aa, pdata);
-	if (ret)
+	if (ret) {
+		dev_err(&client->dev, "Failed to initialize GPIO\n");
 		goto out_err2;
+	}
 
 	for (i = 0; i < S5K6AA_NUM_SUPPLIES; i++)
 		s5k6aa->supplies[i].supply = s5k6aa_supply_names[i];
@@ -1608,8 +1614,10 @@ static int s5k6aa_probe(struct i2c_client *client,
 	}
 
 	ret = s5k6aa_initialize_ctrls(s5k6aa);
-	if (ret)
+	if (ret) {
+		dev_err(&client->dev, "Failed to initialize v4l controls\n");
 		goto out_err4;
+	}
 
 	s5k6aa_presets_data_init(s5k6aa);
 

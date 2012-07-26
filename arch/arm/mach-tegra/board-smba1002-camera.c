@@ -86,7 +86,7 @@ static struct soc_camera_link clink_s5k6aa = {
 };
 
 static struct platform_device smba_tegra_s5k6aa_device = {
-  .name   = "tegra-camera",
+  .name   = "soc-camera-pdrv",
   .id     = 0,
   .dev    = {
     .platform_data = &clink_s5k6aa,
@@ -107,12 +107,14 @@ static struct nvhost_device smba_camera_device = {
 	.id		= 0,
 	.resource	= smba_camera_resources,
 	.num_resources	= ARRAY_SIZE(smba_camera_resources),
-	.dev = {
-		.platform_data = &smba_tegra_s5k6aa_device,
-	},
 };
 
 int __init smba_camera_register_devices(void)
 {
+  int ret;
+  ret = platform_device_register(&smba_tegra_s5k6aa_device);
+  if(ret)
+    return ret;
+
   return nvhost_device_register(&smba_camera_device);
 }

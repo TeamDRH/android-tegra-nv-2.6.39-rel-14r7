@@ -28,6 +28,7 @@
 #include <linux/memblock.h>
 #include <linux/nvhost.h>
 
+#include <media/tegra_v4l2_camera.h>
 #include <media/soc_camera.h>
 #include <media/s5k6aa.h>
 
@@ -82,7 +83,8 @@ static struct i2c_board_info smba_i2c3_board_info_camera[] = {
 
 static struct soc_camera_link clink_s5k6aa = {
   .board_info     = &smba_i2c3_board_info_camera[0],
-  //.power          = mx27_3ds_camera_power,
+  .power = NULL,
+  .reset = NULL,
 };
 
 static struct platform_device smba_tegra_s5k6aa_device = {
@@ -102,19 +104,48 @@ static struct resource smba_camera_resources[] = {
 	},
 };
 
+/* In theory we might want to use this callback to reference the 
+   tegra_camera driver from the soc_camera host driver instead of
+   the i2c client driver */
+static int smba_enable_camera(struct nvhost_device *ndev)
+{
+  pr_info("%s\n", __func__);
+  return 0;
+}
+
+static void smba_disable_camera(struct nvhost_device *ndev)
+{
+  pr_info("%s\n", __func__);
+}
+
+static struct tegra_camera_platform_data smba_camera_pdata = {
+  .enable_camera = &smba_enable_camera,
+  .disable_camera = &smba_disable_camera,
+  .flip_h = 0,
+  .flip_v = 0,
+};
+
 static struct nvhost_device smba_camera_device = {
 	.name		= "tegra-camera",
 	.id		= 0,
 	.resource	= smba_camera_resources,
 	.num_resources	= ARRAY_SIZE(smba_camera_resources),
+	.dev = {
+		.platform_data = &smba_camera_pdata,
+	},
 };
 
 int __init smba_camera_register_devices(void)
 {
   int ret;
+
   ret = platform_device_register(&smba_tegra_s5k6aa_device);
   if(ret)
     return ret;
 
-  return nvhost_device_register(&smba_camera_device);
+  ret = nvhost_device_register(&smba_camera_device);
+  if(ret)
+    return ret;
+
+  return 0;
 }

@@ -236,8 +236,8 @@ struct tegra_buffer {
 };
 
 struct tegra_camera_dev {
+	struct soc_camera_host soc_host; // must be first in struct
 	struct nvhost_device *ndev;
-	struct soc_camera_host soc_host;
 	struct soc_camera_device *icd;
 	struct tegra_camera_platform_data *pdata;
 

@@ -307,7 +307,7 @@ static inline struct v4l2_subdev *ctrl_to_sd(struct v4l2_ctrl *ctrl)
 
 static inline struct s5k6aa *to_s5k6aa(struct v4l2_subdev *sd)
 {
-	return container_of(sd, struct s5k6aa, sd);
+	return v4l2_get_subdevdata(sd);
 }
 
 /* Set initial values for all preview presets */
@@ -1557,7 +1557,7 @@ static int s5k6aa_probe(struct i2c_client *client,
 	struct s5k6aa *s5k6aa;
 	int i, ret;
 
-	dev_info(&client->dev, "%s", __func__);
+	dev_info(&client->dev, "%s\n", __func__);
 
 	if (pdata == NULL) {
 		dev_err(&client->dev, "Platform data not specified\n");
@@ -1585,6 +1585,7 @@ static int s5k6aa_probe(struct i2c_client *client,
 	sd = &s5k6aa->sd;
 	strlcpy(sd->name, DRIVER_NAME, sizeof(sd->name));
 	v4l2_i2c_subdev_init(sd, client, &s5k6aa_subdev_ops);
+	v4l2_set_subdevdata(sd, s5k6aa);
 
 	sd->internal_ops = &s5k6aa_subdev_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;

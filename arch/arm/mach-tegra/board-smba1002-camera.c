@@ -58,7 +58,7 @@ int smba_s5k6aa_set_power(int enable);
 #define S5K6AA_MCLK_FREQ 24000000
 
 struct s5k6aa_platform_data smba_s5k6aa_data = {
-	.set_power = smba_s5k6aa_set_power,
+	.set_power = &smba_s5k6aa_set_power,
 	.mclk_frequency = S5K6AA_MCLK_FREQ,
 	.bus_type = V4L2_MBUS_PARALLEL,
 	.gpio_stby = { 
@@ -74,17 +74,17 @@ struct s5k6aa_platform_data smba_s5k6aa_data = {
 	.vert_flip = false,
 };
 
-static struct i2c_board_info smba_i2c3_board_info_camera[] = {
-	{
-		I2C_BOARD_INFO("S5K6AA",  0x3c),
-		.platform_data = &smba_s5k6aa_data,
-	},
+static struct i2c_board_info smba_i2c3_board_info_camera = {
+  I2C_BOARD_INFO("S5K6AA",  0x3c),
+  // platform data will get overwritten here with soc_camera_device
 };
 
 static struct soc_camera_link clink_s5k6aa = {
-  .board_info     = &smba_i2c3_board_info_camera[0],
+  .board_info = &smba_i2c3_board_info_camera,
+  .i2c_adapter_id = 3,
   .power = NULL,
   .reset = NULL,
+  .priv = &smba_s5k6aa_data,
 };
 
 static struct platform_device smba_tegra_s5k6aa_device = {
@@ -93,6 +93,12 @@ static struct platform_device smba_tegra_s5k6aa_device = {
   .dev    = {
     .platform_data = &clink_s5k6aa,
   },
+};
+
+static struct platform_device tegra_camera_power_device = {
+  // note the underscore
+  .name   = "tegra_camera",
+  .id     = 0,
 };
 
 static struct resource smba_camera_resources[] = {
@@ -138,6 +144,10 @@ static struct nvhost_device smba_camera_device = {
 int __init smba_camera_register_devices(void)
 {
   int ret;
+
+  ret = platform_device_register(&tegra_camera_power_device);
+  if(ret)
+    return ret;
 
   ret = platform_device_register(&smba_tegra_s5k6aa_device);
   if(ret)

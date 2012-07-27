@@ -67,7 +67,11 @@ static int smba_s5k6aa_power_on(void)
 {
 	void *dev = tegra_camera_get_dev();
 
-	pr_info("s5k6aa power on\n");
+	if(!dev) {
+	  pr_err("%s: could not get pm device!\n", __func__);
+	  return 0;
+	}
+	
 	tegra_camera_enable(dev);
 	tegra_camera_clk_set_info(dev, &mclk_info);
 	tegra_camera_clk_set_info(dev, &pclk_info);
@@ -84,7 +88,10 @@ static int smba_s5k6aa_power_off(void)
 {
 	void *dev = tegra_camera_get_dev();
 
-	pr_info("s5k6aa power off\n");
+	if(!dev) {
+	  pr_err("%s: could not get pm device!\n", __func__);
+	  return 0;
+	}
 
 	// camera MCLK (vi_sensor clk)
 	tegra_pinmux_set_tristate(TEGRA_PINGROUP_CSUS, TEGRA_TRI_TRISTATE);

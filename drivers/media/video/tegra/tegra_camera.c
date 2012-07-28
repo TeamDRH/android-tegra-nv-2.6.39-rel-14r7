@@ -28,6 +28,7 @@
 #include <mach/iomap.h>
 #include <mach/clk.h>
 #include <mach/powergate.h>
+#include <mach/clock.h>
 
 #include <media/tegra_camera.h>
 
@@ -501,7 +502,8 @@ static const struct file_operations tegra_camera_fops = {
 static int tegra_camera_clk_get(struct platform_device *pdev, const char *name,
 				struct clk **clk)
 {
-	*clk = clk_get(&pdev->dev, name);
+	/* TODO: clock_get isn't finding the clocks any more */
+	*clk = tegra_get_clock_by_name(name);
 	if (IS_ERR_OR_NULL(*clk)) {
 		dev_err(&pdev->dev, "%s: unable to get clock for %s\n",
 			__func__, name);
@@ -661,6 +663,7 @@ static int __init tegra_camera_init(void)
 {
 	return platform_driver_register(&tegra_camera_driver);
 }
+subsys_initcall(tegra_camera_init);
 
 static void __exit tegra_camera_exit(void)
 {

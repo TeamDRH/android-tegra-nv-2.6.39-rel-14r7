@@ -1044,6 +1044,17 @@ static int s5k6aa_enum_mbus_code(struct v4l2_subdev *sd,
 	return 0;
 }
 
+static int s5k6aa_enum_mbus_fmt(struct v4l2_subdev *sd, unsigned int index,
+			   enum v4l2_mbus_pixelcode *code)
+{
+	if (index >= ARRAY_SIZE(s5k6aa_formats))
+		return -EINVAL;
+
+	*code = s5k6aa_formats[index].code;
+	return 0;
+}
+
+
 static int s5k6aa_enum_frame_size(struct v4l2_subdev *sd,
 				  struct v4l2_subdev_fh *fh,
 				  struct v4l2_subdev_frame_size_enum *fse)
@@ -1246,6 +1257,7 @@ static const struct v4l2_subdev_video_ops s5k6aa_video_ops = {
 	.g_frame_interval	= s5k6aa_g_frame_interval,
 	.s_frame_interval	= s5k6aa_s_frame_interval,
 	.s_stream		= s5k6aa_s_stream,
+	.enum_mbus_fmt = s5k6aa_enum_mbus_fmt,
 };
 
 /*

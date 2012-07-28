@@ -830,6 +830,11 @@ static int __s5k6aa_power_on(struct s5k6aa *s5k6aa)
 {
 	int ret;
 
+	if(!s5k6aa) {
+	  pr_err("%s: missing private data\n", __func__);
+	  return -EINVAL;
+	}
+
 	ret = regulator_bulk_enable(S5K6AA_NUM_SUPPLIES, s5k6aa->supplies);
 	if (ret)
 		return ret;
@@ -850,6 +855,11 @@ static int __s5k6aa_power_on(struct s5k6aa *s5k6aa)
 static int __s5k6aa_power_off(struct s5k6aa *s5k6aa)
 {
 	int ret;
+
+	if(!s5k6aa) {
+	  pr_err("%s: missing private data\n", __func__);
+	  return -EINVAL;
+	}
 
 	if (s5k6aa_gpio_assert(s5k6aa, RST))
 		usleep_range(100, 150);
@@ -1463,6 +1473,11 @@ static int s5k6aa_registered(struct v4l2_subdev *sd)
 {
 	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
 	int ret;
+
+	if(!sd || !s5k6aa) {
+	  pr_err("%s: invalid subdev %p or priv %p\n", __func__, sd, s5k6aa);
+	  return -EINVAL;
+	}
 
 	mutex_lock(&s5k6aa->lock);
 	ret = __s5k6aa_power_on(s5k6aa);

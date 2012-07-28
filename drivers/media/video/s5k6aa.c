@@ -22,6 +22,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
 
+#include <media/soc_camera.h>
 #include <media/media-entity.h>
 #include <media/v4l2-ctrls.h>
 #include <media/v4l2-device.h>
@@ -307,7 +308,7 @@ static inline struct v4l2_subdev *ctrl_to_sd(struct v4l2_ctrl *ctrl)
 
 static inline struct s5k6aa *to_s5k6aa(struct v4l2_subdev *sd)
 {
-	return v4l2_get_subdevdata(sd);
+	return container_of(sd, struct s5k6aa, sd);
 }
 
 /* Set initial values for all preview presets */
@@ -832,6 +833,7 @@ static int __s5k6aa_power_on(struct s5k6aa *s5k6aa)
 	ret = regulator_bulk_enable(S5K6AA_NUM_SUPPLIES, s5k6aa->supplies);
 	if (ret)
 		return ret;
+
 	if (s5k6aa_gpio_deassert(s5k6aa, STBY))
 		usleep_range(150, 200);
 
@@ -1552,12 +1554,27 @@ static int s5k6aa_configure_gpios(struct s5k6aa *s5k6aa,
 static int s5k6aa_probe(struct i2c_client *client,
 			const struct i2c_device_id *id)
 {
-	const struct s5k6aa_platform_data *pdata = client->dev.platform_data;
+	/* NOTE! This changes in later kernel versions: pdata is a 
+	   camera_link instead of camera_device! */
+	struct soc_camera_device *icd = client->dev.platform_data;
+	struct soc_camera_link *icl;
+	const struct s5k6aa_platform_data *pdata;
 	struct v4l2_subdev *sd;
 	struct s5k6aa *s5k6aa;
 	int i, ret;
 
-	dev_info(&client->dev, "%s\n", __func__);
+	if (!icd) {
+		dev_err(&client->dev, "Missing soc_camera_device\n");
+		return -EINVAL;
+	}
+
+        icl = to_soc_camera_link(icd);
+        if (!icl || !icl->priv) {
+		dev_err(&client->dev, "Missing soc_camera_link\n");
+                return -EINVAL;
+	}
+
+	pdata = icl->priv;
 
 	if (pdata == NULL) {
 		dev_err(&client->dev, "Platform data not specified\n");
@@ -1585,7 +1602,6 @@ static int s5k6aa_probe(struct i2c_client *client,
 	sd = &s5k6aa->sd;
 	strlcpy(sd->name, DRIVER_NAME, sizeof(sd->name));
 	v4l2_i2c_subdev_init(sd, client, &s5k6aa_subdev_ops);
-	v4l2_set_subdevdata(sd, s5k6aa);
 
 	sd->internal_ops = &s5k6aa_subdev_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;

@@ -1519,6 +1519,27 @@ static const struct v4l2_subdev_ops s5k6aa_subdev_ops = {
 	.video = &s5k6aa_video_ops,
 };
 
+static int s5k6aa_set_bus_param(struct soc_camera_device *icd,
+				unsigned long		  flags)
+{
+	return 0;
+}
+
+static unsigned long s5k6aa_query_bus_param(struct soc_camera_device *icd)
+{
+	struct soc_camera_link *icl = to_soc_camera_link(icd);
+	unsigned long flags = SOCAM_PCLK_SAMPLE_RISING | SOCAM_MASTER |
+		SOCAM_VSYNC_ACTIVE_HIGH | SOCAM_HSYNC_ACTIVE_HIGH |
+		SOCAM_DATA_ACTIVE_HIGH | SOCAM_DATAWIDTH_8;
+
+	return soc_camera_apply_sensor_flags(icl, flags);
+}
+
+static struct soc_camera_ops s5k6aa_ops = {
+	.set_bus_param		= s5k6aa_set_bus_param,
+	.query_bus_param	= s5k6aa_query_bus_param,
+};
+
 /*
  * GPIO setup
  */
@@ -1629,6 +1650,7 @@ static int s5k6aa_probe(struct i2c_client *client,
 	sd = &s5k6aa->sd;
 	strlcpy(sd->name, DRIVER_NAME, sizeof(sd->name));
 	v4l2_i2c_subdev_init(sd, client, &s5k6aa_subdev_ops);
+	icd->ops = &s5k6aa_ops;
 
 	sd->internal_ops = &s5k6aa_subdev_internal_ops;
 	sd->flags |= V4L2_SUBDEV_FL_HAS_DEVNODE;

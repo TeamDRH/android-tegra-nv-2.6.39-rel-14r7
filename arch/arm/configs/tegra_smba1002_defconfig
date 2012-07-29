@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux/arm 2.6.39.4 Kernel Configuration
-# Wed Jul 25 21:54:00 2012
+# Sun Jul 29 17:26:44 2012
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -3049,7 +3049,7 @@ CONFIG_FTRACE_MCOUNT_RECORD=y
 # CONFIG_RING_BUFFER_BENCHMARK is not set
 # CONFIG_TRACELEVEL is not set
 # CONFIG_TRACEDUMP is not set
-# CONFIG_DYNAMIC_DEBUG is not set
+CONFIG_DYNAMIC_DEBUG=y
 # CONFIG_DMA_API_DEBUG is not set
 # CONFIG_ATOMIC64_SELFTEST is not set
 # CONFIG_SAMPLES is not set

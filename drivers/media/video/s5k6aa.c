@@ -1110,7 +1110,29 @@ static void s5k6aa_try_format(struct s5k6aa *s5k6aa,
 	mf->field	= V4L2_FIELD_NONE;
 }
 
-static int s5k6aa_get_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
+static int s5k6aa_video_try_fmt(struct v4l2_subdev *sd,
+				 struct v4l2_mbus_framefmt *mf)
+{
+	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
+
+	s5k6aa_try_format(s5k6aa, mf);
+
+	return 0;
+}
+
+static int s5k6aa_video_get_fmt(struct v4l2_subdev *sd,
+				struct v4l2_mbus_framefmt *mf)
+{
+	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
+
+	mutex_lock(&s5k6aa->lock);
+	*mf = s5k6aa->preset->mbus_fmt;
+	mutex_unlock(&s5k6aa->lock);
+
+	return 0;
+}
+
+static int s5k6aa_pad_get_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 			  struct v4l2_subdev_format *fmt)
 {
 	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
@@ -1131,7 +1153,50 @@ static int s5k6aa_get_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 	return 0;
 }
 
-static int s5k6aa_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
+static int s5k6aa_video_set_fmt(struct v4l2_subdev *sd,
+				struct v4l2_mbus_framefmt *mf)
+{
+	int ret = 0;
+	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
+	struct s5k6aa_preset *preset = s5k6aa->preset;
+	struct v4l2_rect *crop = &s5k6aa->ccd_rect;
+
+	mutex_lock(&s5k6aa->lock);
+	s5k6aa_try_format(s5k6aa, mf);
+
+	if (s5k6aa->streaming) {
+		ret = -EBUSY;
+	} else {
+		struct v4l2_subdev_frame_interval fiv = {
+			.interval = {0, 1}
+		};
+
+		s5k6aa->apply_cfg = 1;
+		preset->mbus_fmt = *mf;
+
+		/*
+		 * Make sure the crop window is valid, i.e. its size is
+		 * greater than the output window, as the ISP supports
+		 * only down-scaling.
+		 */
+		crop->width = clamp_t(unsigned int, crop->width, mf->width,
+				      S5K6AA_WIN_WIDTH_MAX);
+		crop->height = clamp_t(unsigned int, crop->height, mf->height,
+				       S5K6AA_WIN_HEIGHT_MAX);
+		crop->left = clamp_t(unsigned int, crop->left, 0,
+				     S5K6AA_WIN_WIDTH_MAX - crop->width);
+		crop->top  = clamp_t(unsigned int, crop->top, 0,
+				     S5K6AA_WIN_HEIGHT_MAX - crop->height);
+
+		/* Reset to minimum possible frame interval */
+		ret = __s5k6aa_set_frame_interval(s5k6aa, &fiv);
+	}
+	mutex_unlock(&s5k6aa->lock);
+
+	return ret;
+}
+
+static int s5k6aa_pad_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 			  struct v4l2_subdev_format *fmt)
 {
 	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
@@ -1247,8 +1312,8 @@ static const struct v4l2_subdev_pad_ops s5k6aa_pad_ops = {
 	.enum_mbus_code		= s5k6aa_enum_mbus_code,
 	.enum_frame_size	= s5k6aa_enum_frame_size,
 	.enum_frame_interval	= s5k6aa_enum_frame_interval,
-	.get_fmt		= s5k6aa_get_fmt,
-	.set_fmt		= s5k6aa_set_fmt,
+	.get_fmt		= s5k6aa_pad_get_fmt,
+	.set_fmt		= s5k6aa_pad_set_fmt,
 	.get_crop		= s5k6aa_get_crop,
 	.set_crop		= s5k6aa_set_crop,
 };
@@ -1258,6 +1323,9 @@ static const struct v4l2_subdev_video_ops s5k6aa_video_ops = {
 	.s_frame_interval	= s5k6aa_s_frame_interval,
 	.s_stream		= s5k6aa_s_stream,
 	.enum_mbus_fmt = s5k6aa_enum_mbus_fmt,
+	.try_mbus_fmt = s5k6aa_video_try_fmt,
+	.g_mbus_fmt = s5k6aa_video_get_fmt,
+	.s_mbus_fmt = s5k6aa_video_set_fmt,
 };
 
 /*

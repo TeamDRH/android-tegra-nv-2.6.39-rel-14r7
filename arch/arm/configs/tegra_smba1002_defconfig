@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux/arm 2.6.39.4 Kernel Configuration
-# Sun Jul 29 17:26:44 2012
+# Sun Jul 29 23:22:34 2012
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -309,8 +309,8 @@ CONFIG_TEGRA_SILICON_PLATFORM=y
 # CONFIG_TEGRA_SIMULATION_PLATFORM is not set
 # CONFIG_TEGRA_FPGA_PLATFORM is not set
 # CONFIG_MACH_P852 is not set
-CONFIG_TEGRA_DEBUG_UART_NONE=y
-# CONFIG_TEGRA_DEBUG_UARTA is not set
+# CONFIG_TEGRA_DEBUG_UART_NONE is not set
+CONFIG_TEGRA_DEBUG_UARTA=y
 # CONFIG_TEGRA_DEBUG_UARTB is not set
 # CONFIG_TEGRA_DEBUG_UARTC is not set
 # CONFIG_TEGRA_DEBUG_UARTD is not set

@@ -931,7 +931,7 @@ static int s5k6aa_s_stream(struct v4l2_subdev *sd, int on)
 	if (s5k6aa->streaming == !on) {
 		if (!ret && s5k6aa->apply_cfg)
 			ret = s5k6aa_set_prev_config(s5k6aa, s5k6aa->preset);
-		if (s5k6aa->apply_crop)
+		if (!ret && s5k6aa->apply_crop)
 			ret = s5k6aa_set_input_params(s5k6aa);
 		if (!ret)
 			ret = __s5k6aa_stream(s5k6aa, !!on);
@@ -1564,6 +1564,7 @@ static int s5k6aa_registered(struct v4l2_subdev *sd)
 	if (!ret) {
 		msleep(100);
 		ret = s5k6aa_check_fw_revision(s5k6aa);
+		ret = 0; // ignore i2c errors for now
 		__s5k6aa_power_off(s5k6aa);
 	}
 	mutex_unlock(&s5k6aa->lock);

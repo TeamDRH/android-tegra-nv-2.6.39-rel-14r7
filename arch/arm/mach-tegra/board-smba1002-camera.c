@@ -57,8 +57,11 @@ int smba_s5k6aa_set_power(int enable);
 // TODO: clean these up into a common header
 #define S5K6AA_MCLK_FREQ 24000000
 
+static int clink_s5k6aa_set_power(struct device *dev, int power_on) {
+  return smba_s5k6aa_set_power(power_on);
+}
+
 struct s5k6aa_platform_data smba_s5k6aa_data = {
-	.set_power = &smba_s5k6aa_set_power,
 	.mclk_frequency = S5K6AA_MCLK_FREQ,
 	.bus_type = V4L2_MBUS_PARALLEL,
 	.gpio_stby = { 
@@ -82,9 +85,9 @@ static struct i2c_board_info smba_i2c3_board_info_camera = {
 static struct soc_camera_link clink_s5k6aa = {
   .board_info = &smba_i2c3_board_info_camera,
   .i2c_adapter_id = 3,
-  .power = NULL,
-  .reset = NULL,
+  .power = &clink_s5k6aa_set_power,
   .priv = &smba_s5k6aa_data,
+  // TODO: move s5k6aa regulators here
 };
 
 static struct platform_device smba_tegra_s5k6aa_device = {
@@ -115,13 +118,16 @@ static struct resource smba_camera_resources[] = {
    the i2c client driver */
 static int smba_enable_camera(struct nvhost_device *ndev)
 {
-  pr_info("%s\n", __func__);
-  return 0;
+	// struct soc_camera_host *ici = to_soc_camera_host(&ndev->dev);
+
+	dev_dbg(&ndev->dev, "%s\n", __func__);
+
+	return 0;
 }
 
 static void smba_disable_camera(struct nvhost_device *ndev)
 {
-  pr_info("%s\n", __func__);
+	dev_dbg(&ndev->dev, "%s\n", __func__);
 }
 
 static struct tegra_camera_platform_data smba_camera_pdata = {

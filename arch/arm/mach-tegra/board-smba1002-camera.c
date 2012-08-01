@@ -137,19 +137,11 @@ static struct tegra_camera_platform_data smba_camera_pdata = {
   .flip_v = 0,
 };
 
-static struct nvhost_device smba_camera_device = {
-	.name		= "tegra-camera",
-	.id		= 0,
-	.resource	= smba_camera_resources,
-	.num_resources	= ARRAY_SIZE(smba_camera_resources),
-	.dev = {
-		.platform_data = &smba_camera_pdata,
-	},
-};
-
 int __init smba_camera_register_devices(void)
 {
   int ret;
+
+  tegra_camera_device.dev.platform_data = &smba_camera_pdata;
 
   ret = platform_device_register(&tegra_camera_power_device);
   if(ret)
@@ -159,7 +151,7 @@ int __init smba_camera_register_devices(void)
   if(ret)
     return ret;
 
-  ret = nvhost_device_register(&smba_camera_device);
+  ret = nvhost_device_register(&tegra_camera_device);
   if(ret)
     return ret;
 

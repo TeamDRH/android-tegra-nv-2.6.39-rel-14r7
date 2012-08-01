@@ -122,5 +122,6 @@ extern struct platform_device debug_uartd_device;
 extern struct platform_device tegra_se_device;
 extern struct platform_device debug_uarte_device;
 #endif
+extern struct nvhost_device tegra_camera_device;
 
 #endif

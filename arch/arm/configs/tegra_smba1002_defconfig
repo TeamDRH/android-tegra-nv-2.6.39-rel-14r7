@@ -1,7 +1,7 @@
 #
 # Automatically generated make config: don't edit
 # Linux/arm 2.6.39.4 Kernel Configuration
-# Thu Jun 14 21:29:55 2012
+# Wed Aug  1 18:28:26 2012
 #
 CONFIG_ARM=y
 CONFIG_HAVE_PWM=y
@@ -1022,7 +1022,8 @@ CONFIG_BLK_DEV=y
 # CONFIG_BLK_DEV_DAC960 is not set
 # CONFIG_BLK_DEV_UMEM is not set
 # CONFIG_BLK_DEV_COW_COMMON is not set
-# CONFIG_BLK_DEV_LOOP is not set
+CONFIG_BLK_DEV_LOOP=y
+# CONFIG_BLK_DEV_CRYPTOLOOP is not set
 
 #
 # DRBD disabled because PROC_FS, INET or CONNECTOR not selected

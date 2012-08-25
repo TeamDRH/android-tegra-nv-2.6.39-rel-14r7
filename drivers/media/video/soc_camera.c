@@ -539,7 +539,8 @@ epower:
 	icd->use_count--;
 	module_put(ici->ops->owner);
 
-	return ret;
+	/* .open should return -1 or success only */
+	return -1;
 }
 
 static int soc_camera_close(struct file *file)

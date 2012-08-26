@@ -292,6 +292,12 @@ static const struct s5k6aa_pixfmt s5k6aa_formats[] = {
 	{ V4L2_MBUS_FMT_RGB565_2X8_BE,	V4L2_COLORSPACE_JPEG,	0 },
 };
 
+static const struct v4l2_frmsize_discrete s5k6aa_frame_sizes[] = {
+	{1280, 1024},
+	{1280, 720},
+	{640, 480},
+};
+
 static const struct s5k6aa_interval s5k6aa_intervals[] = {
 	{ 1000, 10, {10000, 1000000}, {1280, 1024} }, /* 10 fps */
 	{ 666, 15, {15000, 1000000}, {1280, 1024} }, /* 15 fps */
@@ -460,6 +466,10 @@ static int s5k6aa_configure_pixel_clocks(struct s5k6aa *s5k6aa)
 		ret = s5k6aa_write(c, REG_I_INIT_PARAMS_UPDATED, 1);
 	if (!ret)
 		ret = s5k6aa_read(c, REG_I_ERROR_INFO, &status);
+
+	if(status)
+		pr_err("%s: firmware indicated a clocking error (%d), try power-cycling.\n",
+		       __func__, status);
 
 	return ret ? ret : (status ? -EINVAL : 0);
 }
@@ -955,17 +965,17 @@ static int s5k6aa_g_frame_interval(struct v4l2_subdev *sd,
 }
 
 static int __s5k6aa_set_frame_interval(struct s5k6aa *s5k6aa,
-				       struct v4l2_subdev_frame_interval *fi)
+				       struct v4l2_fract *f)
 {
 	struct v4l2_mbus_framefmt *mbus_fmt = &s5k6aa->preset->mbus_fmt;
 	const struct s5k6aa_interval *fiv = &s5k6aa_intervals[0];
 	unsigned int err, min_err = UINT_MAX;
 	unsigned int i, fr_time;
 
-	if (fi->interval.denominator == 0)
+	if (f->denominator == 0)
 		return -EINVAL;
 
-	fr_time = fi->interval.numerator * 10000 / fi->interval.denominator;
+	fr_time = f->numerator * 10000 / f->denominator;
 
 	for (i = 0; i < ARRAY_SIZE(s5k6aa_intervals); i++) {
 		const struct s5k6aa_interval *iv = &s5k6aa_intervals[i];
@@ -997,7 +1007,7 @@ static int s5k6aa_s_frame_interval(struct v4l2_subdev *sd,
 		 fi->interval.numerator, fi->interval.denominator);
 
 	mutex_lock(&s5k6aa->lock);
-	ret = __s5k6aa_set_frame_interval(s5k6aa, fi);
+	ret = __s5k6aa_set_frame_interval(s5k6aa, &fi->interval);
 	s5k6aa->apply_cfg = 1;
 
 	mutex_unlock(&s5k6aa->lock);
@@ -1010,14 +1020,26 @@ static int s5k6aa_s_frame_interval(struct v4l2_subdev *sd,
 static int s5k6aa_enum_frame_interval(struct v4l2_subdev *sd,
 			      struct v4l2_frmivalenum *fie)
 {
+	int i, index;
 	int ret = 0;
 
-	if (fie->index >= ARRAY_SIZE(s5k6aa_intervals))
+	index = fie->index;
+	for(i=0;i<ARRAY_SIZE(s5k6aa_intervals);i++) {
+		if(s5k6aa_intervals[i].size.width == fie->width &&
+		   s5k6aa_intervals[i].size.height == fie->height) {
+			if(index-- == 0) {
+				break;
+			}
+		}
+	}
+	if(index != -1) {
+		/* index for this frame size not found */
 		return -EINVAL;
+	}
 
 	fie->type = V4L2_FRMIVAL_TYPE_DISCRETE;
 	fie->discrete.numerator = 1;
-	fie->discrete.denominator = s5k6aa_intervals[fie->index].fr_rate;
+	fie->discrete.denominator = s5k6aa_intervals[i].fr_rate;
 
 	return ret;
 }
@@ -1043,17 +1065,53 @@ static int s5k6aa_enum_mbus_fmt(struct v4l2_subdev *sd, unsigned int index,
 	return 0;
 }
 
-
 static int s5k6aa_enum_frame_size(struct v4l2_subdev *sd,
 				  struct v4l2_frmsizeenum *fsize)
 {
-	if (fsize->index >= ARRAY_SIZE(s5k6aa_formats))
+	if (fsize->index >= ARRAY_SIZE(s5k6aa_frame_sizes))
 		return -EINVAL;
 
 	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
-	fsize->discrete  = s5k6aa_intervals[fsize->index].size;
+	fsize->discrete = s5k6aa_frame_sizes[fsize->index];
 
 	return 0;
+}
+
+static int s5k6aa_g_parm(struct v4l2_subdev *sd, struct v4l2_streamparm *parms)
+{
+	struct v4l2_captureparm *cp = &parms->parm.capture;
+	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
+
+	if (parms->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
+
+	memset(cp, 0, sizeof(struct v4l2_captureparm));
+	cp->capability = V4L2_CAP_TIMEPERFRAME;
+
+	mutex_lock(&s5k6aa->lock);
+	cp->timeperframe = s5k6aa->fiv->interval;
+	mutex_unlock(&s5k6aa->lock);
+
+	return 0;
+}
+
+static int s5k6aa_s_parm(struct v4l2_subdev *sd, struct v4l2_streamparm *parms)
+{
+	struct v4l2_captureparm *cp = &parms->parm.capture;
+	struct v4l2_fract *tpf = &cp->timeperframe;
+	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
+	int ret;
+
+	if (parms->type != V4L2_BUF_TYPE_VIDEO_CAPTURE)
+		return -EINVAL;
+	if (cp->extendedmode != 0)
+		return -EINVAL;
+
+	mutex_lock(&s5k6aa->lock);
+	ret = __s5k6aa_set_frame_interval(s5k6aa, tpf);
+	mutex_unlock(&s5k6aa->lock);
+
+	return ret;
 }
 
 static struct v4l2_rect *
@@ -1146,11 +1204,10 @@ static int s5k6aa_video_set_fmt(struct v4l2_subdev *sd,
 	if (s5k6aa->streaming) {
 		ret = -EBUSY;
 	} else {
-		struct v4l2_subdev_frame_interval fiv = {
-			.interval = {0, 1}
-		};
+		struct v4l2_fract fr = {0, 1};
 
 		s5k6aa->apply_cfg = 1;
+		pr_info("%s: setting format: %dx%d code=%x\n", __func__, mf->width, mf->height, mf->code);
 		preset->mbus_fmt = *mf;
 
 		/*
@@ -1168,7 +1225,7 @@ static int s5k6aa_video_set_fmt(struct v4l2_subdev *sd,
 				     S5K6AA_WIN_HEIGHT_MAX - crop->height);
 
 		/* Reset to minimum possible frame interval */
-		ret = __s5k6aa_set_frame_interval(s5k6aa, &fiv);
+		ret = __s5k6aa_set_frame_interval(s5k6aa, &fr);
 	}
 	mutex_unlock(&s5k6aa->lock);
 
@@ -1201,9 +1258,7 @@ static int s5k6aa_pad_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 	}
 
 	if (ret == 0) {
-		struct v4l2_subdev_frame_interval fiv = {
-			.interval = {0, 1}
-		};
+		struct v4l2_fract fr = {0, 1};
 
 		*mf = fmt->format;
 		/*
@@ -1221,7 +1276,7 @@ static int s5k6aa_pad_set_fmt(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 				     S5K6AA_WIN_HEIGHT_MAX - crop->height);
 
 		/* Reset to minimum possible frame interval */
-		ret = __s5k6aa_set_frame_interval(s5k6aa, &fiv);
+		ret = __s5k6aa_set_frame_interval(s5k6aa, &fr);
 	}
 	mutex_unlock(&s5k6aa->lock);
 
@@ -1299,13 +1354,15 @@ static const struct v4l2_subdev_video_ops s5k6aa_video_ops = {
 	.g_frame_interval	= s5k6aa_g_frame_interval,
 	.s_frame_interval	= s5k6aa_s_frame_interval,
 	.s_stream		= s5k6aa_s_stream,
-	//.enum_frameintervals	= s5k6aa_enum_frame_interval,
-	//.enum_framesizes	= s5k6aa_enum_frame_size,
-	//.enum_mbus_fsizes	= s5k6aa_enum_frame_size,
+	.enum_frameintervals	= s5k6aa_enum_frame_interval,
+	.enum_framesizes	= s5k6aa_enum_frame_size,
+	.enum_mbus_fsizes	= s5k6aa_enum_frame_size,
 	.enum_mbus_fmt = s5k6aa_enum_mbus_fmt,
 	.try_mbus_fmt = s5k6aa_video_try_fmt,
 	.g_mbus_fmt = s5k6aa_video_get_fmt,
 	.s_mbus_fmt = s5k6aa_video_set_fmt,
+	.s_parm = s5k6aa_s_parm,
+	.g_parm = s5k6aa_g_parm,
 };
 
 /*
@@ -1544,7 +1601,6 @@ static int s5k6aa_registered(struct v4l2_subdev *sd)
 	if (!ret) {
 		msleep(100);
 		ret = s5k6aa_check_fw_revision(s5k6aa);
-		ret = 0; // ignore i2c errors for now
 		__s5k6aa_power_off(s5k6aa);
 	}
 	mutex_unlock(&s5k6aa->lock);

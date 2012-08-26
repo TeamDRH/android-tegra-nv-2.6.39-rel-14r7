@@ -222,6 +222,7 @@ struct s5k6aa_ctrls {
 
 struct s5k6aa_interval {
 	u16 reg_fr_time;
+	u16 fr_rate;
 	struct v4l2_fract interval;
 	/* Maximum rectangle for the interval */
 	struct v4l2_frmsize_discrete size;
@@ -292,14 +293,14 @@ static const struct s5k6aa_pixfmt s5k6aa_formats[] = {
 };
 
 static const struct s5k6aa_interval s5k6aa_intervals[] = {
-	{ 1000, {10000, 1000000}, {1280, 1024} }, /* 10 fps */
-	{ 666,  {15000, 1000000}, {1280, 1024} }, /* 15 fps */
-	{ 500,  {20000, 1000000}, {1280, 720} },  /* 20 fps */
-	{ 400,  {25000, 1000000}, {640, 480} },   /* 25 fps */
-	{ 333,  {33300, 1000000}, {640, 480} },   /* 30 fps */
+	{ 1000, 10, {10000, 1000000}, {1280, 1024} }, /* 10 fps */
+	{ 666, 15, {15000, 1000000}, {1280, 1024} }, /* 15 fps */
+	{ 500, 20, {20000, 1000000}, {1280, 720} },  /* 20 fps */
+	{ 400, 25, {25000, 1000000}, {640, 480} },   /* 25 fps */
+	{ 333, 30, {33300, 1000000}, {640, 480} },   /* 30 fps */
 };
 
-#define S5K6AA_INTERVAL_DEF_INDEX 1 /* 15 fps */
+#define S5K6AA_INTERVAL_DEF_INDEX 1
 
 static inline struct v4l2_subdev *ctrl_to_sd(struct v4l2_ctrl *ctrl)
 {
@@ -1007,28 +1008,16 @@ static int s5k6aa_s_frame_interval(struct v4l2_subdev *sd,
  * V4L2 subdev pad level and video operations
  */
 static int s5k6aa_enum_frame_interval(struct v4l2_subdev *sd,
-			      struct v4l2_subdev_fh *fh,
-			      struct v4l2_subdev_frame_interval_enum *fie)
+			      struct v4l2_frmivalenum *fie)
 {
-	struct s5k6aa *s5k6aa = to_s5k6aa(sd);
-	const struct s5k6aa_interval *fi;
 	int ret = 0;
 
-	if (fie->index > ARRAY_SIZE(s5k6aa_intervals))
+	if (fie->index >= ARRAY_SIZE(s5k6aa_intervals))
 		return -EINVAL;
 
-	v4l_bound_align_image(&fie->width, S5K6AA_WIN_WIDTH_MIN,
-			      S5K6AA_WIN_WIDTH_MAX, 1,
-			      &fie->height, S5K6AA_WIN_HEIGHT_MIN,
-			      S5K6AA_WIN_HEIGHT_MAX, 1, 0);
-
-	mutex_lock(&s5k6aa->lock);
-	fi = &s5k6aa_intervals[fie->index];
-	if (fie->width > fi->size.width || fie->height > fi->size.height)
-		ret = -EINVAL;
-	else
-		fie->interval = fi->interval;
-	mutex_unlock(&s5k6aa->lock);
+	fie->type = V4L2_FRMIVAL_TYPE_DISCRETE;
+	fie->discrete.numerator = 1;
+	fie->discrete.denominator = s5k6aa_intervals[fie->index].fr_rate;
 
 	return ret;
 }
@@ -1056,23 +1045,13 @@ static int s5k6aa_enum_mbus_fmt(struct v4l2_subdev *sd, unsigned int index,
 
 
 static int s5k6aa_enum_frame_size(struct v4l2_subdev *sd,
-				  struct v4l2_subdev_fh *fh,
-				  struct v4l2_subdev_frame_size_enum *fse)
+				  struct v4l2_frmsizeenum *fsize)
 {
-	int i = ARRAY_SIZE(s5k6aa_formats);
-
-	if (fse->index > 0)
+	if (fsize->index >= ARRAY_SIZE(s5k6aa_formats))
 		return -EINVAL;
 
-	while (--i)
-		if (fse->code == s5k6aa_formats[i].code)
-			break;
-
-	fse->code = s5k6aa_formats[i].code;
-	fse->min_width  = S5K6AA_WIN_WIDTH_MIN;
-	fse->max_width  = S5K6AA_WIN_WIDTH_MAX;
-	fse->max_height = S5K6AA_WIN_HEIGHT_MIN;
-	fse->min_height = S5K6AA_WIN_HEIGHT_MAX;
+	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
+	fsize->discrete  = s5k6aa_intervals[fsize->index].size;
 
 	return 0;
 }
@@ -1310,8 +1289,6 @@ static int s5k6aa_set_crop(struct v4l2_subdev *sd, struct v4l2_subdev_fh *fh,
 
 static const struct v4l2_subdev_pad_ops s5k6aa_pad_ops = {
 	.enum_mbus_code		= s5k6aa_enum_mbus_code,
-	.enum_frame_size	= s5k6aa_enum_frame_size,
-	.enum_frame_interval	= s5k6aa_enum_frame_interval,
 	.get_fmt		= s5k6aa_pad_get_fmt,
 	.set_fmt		= s5k6aa_pad_set_fmt,
 	.get_crop		= s5k6aa_get_crop,
@@ -1322,6 +1299,9 @@ static const struct v4l2_subdev_video_ops s5k6aa_video_ops = {
 	.g_frame_interval	= s5k6aa_g_frame_interval,
 	.s_frame_interval	= s5k6aa_s_frame_interval,
 	.s_stream		= s5k6aa_s_stream,
+	//.enum_frameintervals	= s5k6aa_enum_frame_interval,
+	//.enum_framesizes	= s5k6aa_enum_frame_size,
+	//.enum_mbus_fsizes	= s5k6aa_enum_frame_size,
 	.enum_mbus_fmt = s5k6aa_enum_mbus_fmt,
 	.try_mbus_fmt = s5k6aa_video_try_fmt,
 	.g_mbus_fmt = s5k6aa_video_get_fmt,

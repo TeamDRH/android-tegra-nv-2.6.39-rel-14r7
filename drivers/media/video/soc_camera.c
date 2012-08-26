@@ -248,7 +248,7 @@ static int soc_camera_enum_fivals(struct file *file, void *fh,
 				   struct v4l2_frmivalenum *fival)
 {
 	struct soc_camera_device *icd = file->private_data;
-	struct soc_camera_host *ici = to_soc_camera_host(icd->parent);
+	struct soc_camera_host *ici = to_soc_camera_host(icd->dev.parent);
 
 	return ici->ops->enum_fivals(icd, fival);
 }
